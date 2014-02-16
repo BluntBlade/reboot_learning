@@ -32,8 +32,9 @@ sub search {
 sub search_node {
     my $self = shift;
     my $data = shift;
+    my $root_node = shift;
 
-    my $node = $self->{root};
+    my $node = $root_node || $self->{root};
     if (not defined($node)) {
         return undef;
     }
@@ -61,9 +62,48 @@ sub search_node {
     } # while
 } # search_node
 
+sub predecessor {
+    my $node = shift;
+
+    if (not defined($node)) {
+        return undef;
+    }
+
+    if (not defined($node->{left})) {
+        return $node->{parent};
+    }
+
+    $node = $node->{left};
+    while (defined($node->{right})) {
+        $node = $node->{right};
+    } # while
+
+    return $node;
+} # predecessor
+
+sub successor {
+    my $node = shift;
+
+    if (not defined($node)) {
+        return undef;
+    }
+
+    if (not defined($node->{right})) {
+        return $node->{parent};
+    }
+
+    $node = $node->{right};
+    while (defined($node->{left})) {
+        $node = $node->{left};
+    } # while
+
+    return $node;
+} # successor
+
 sub insert {
     my $self = shift;
     my $data = shift;
+    my $root_node = shift;
 
     my $new_node = {
         parent => undef,
@@ -77,7 +117,7 @@ sub insert {
         return $new_node, undef;
     }
 
-    my ($node, $parent, $pos) = $self->search_node($data);
+    my ($node, $parent, $pos) = $self->search_node($data, $root_node);
     if (defined($node)) {
         # already inserted
         return $node, 1;
