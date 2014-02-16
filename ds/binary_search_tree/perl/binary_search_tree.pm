@@ -100,40 +100,6 @@ sub successor {
     return $node;
 } # successor
 
-sub insert {
-    my $self = shift;
-    my $data = shift;
-    my $root_node = shift;
-
-    my $new_node = {
-        parent => undef,
-        data   => $data,
-        left   => undef,
-        right  => undef,
-    };
-
-    if (not defined($self->{root})) {
-        $self->{root} = $new_node;
-        return $new_node, undef;
-    }
-
-    my ($node, $parent, $pos) = $self->search_node($data, $root_node);
-    if (defined($node)) {
-        # already inserted
-        return $node, 1;
-    }
-
-    $new_node->{parent} = $parent;
-
-    if ($pos == LEFT_CHILD) {
-        $parent->{left}  = $new_node;
-    } else {
-        $parent->{right} = $new_node;
-    }
-
-    return $new_node, undef;
-} # insert
-
 sub in_order {
     my $self = shift;
     my $proc = shift;
@@ -179,6 +145,40 @@ sub in_order {
     } # while
     return undef;
 } # in_order
+
+sub insert {
+    my $self = shift;
+    my $data = shift;
+    my $root_node = shift;
+
+    my $new_node = {
+        parent => undef,
+        data   => $data,
+        left   => undef,
+        right  => undef,
+    };
+
+    if (not defined($self->{root})) {
+        $self->{root} = $new_node;
+        return $new_node, undef;
+    }
+
+    my ($node, $parent, $pos) = $self->search_node($data, $root_node);
+    if (defined($node)) {
+        # already inserted
+        return $node, 1;
+    }
+
+    $new_node->{parent} = $parent;
+
+    if ($pos == LEFT_CHILD) {
+        $parent->{left}  = $new_node;
+    } else {
+        $parent->{right} = $new_node;
+    }
+
+    return $new_node, undef;
+} # insert
 
 1;
 
