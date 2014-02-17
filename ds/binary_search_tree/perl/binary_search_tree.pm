@@ -18,6 +18,31 @@ sub new {
 use constant LEFT_CHILD  => 1;
 use constant RIGHT_CHILD => 2;
 
+sub is_leaf {
+    my $node = shift;
+    return (!defined($node->{left}) && !defined($node->{right}));
+} # is_leaf
+
+sub is_left_child {
+    my $node = shift;
+    return (defined($node->{parent}) && defined($node->{parent}{left}) && $node->{parent}{left} == $node);
+} # is_left_child
+
+sub is_right_child {
+    my $node = shift;
+    return (defined($node->{parent}) && defined($node->{parent}{right}) && $node->{parent}{right} == $node);
+} # is_right_child
+
+sub has_left_child {
+    my $node = shift;
+    return defined($node->{left});
+} # has_left_child
+
+sub has_right_child {
+    my $node = shift;
+    return defined($node->{right});
+} # has_right_child
+
 sub search {
     my $self = shift;
     my $data = shift;
@@ -69,16 +94,18 @@ sub predecessor {
         return undef;
     }
 
-    if (not defined($node->{left})) {
-        return $node->{parent};
+    if (has_left_child($node)) {
+        $node = $node->{left};
+        while (has_right_child($node)) {
+            $node = $node->{right};
+        } # while
+        return $node;
     }
 
-    $node = $node->{left};
-    while (defined($node->{right})) {
-        $node = $node->{right};
-    } # while
-
-    return $node;
+    while (is_left_child($node)) {
+        $node = $node->{parent};
+    }
+    return $node->{parent};
 } # predecessor
 
 sub successor {
@@ -88,16 +115,18 @@ sub successor {
         return undef;
     }
 
-    if (not defined($node->{right})) {
-        return $node->{parent};
+    if (has_right_child($node)) {
+        $node = $node->{right};
+        while (defined($node->{left})) {
+            $node = $node->{left};
+        } # while
+        return $node;
     }
 
-    $node = $node->{right};
-    while (defined($node->{left})) {
-        $node = $node->{left};
+    while (is_right_child($node)) {
+        $node = $node->{parent};
     } # while
-
-    return $node;
+    return $node->{parent};
 } # successor
 
 sub in_order {
@@ -145,6 +174,72 @@ sub in_order {
     } # while
     return undef;
 } # in_order
+
+sub delete {
+    my $self = shift;
+    my $data = shift;
+
+    my $node = $self->search_node($data);
+    if (not defined($node)) {
+        return undef, undef;
+    }
+
+    if (has_left_child($node)) {
+        my $predecessor = predecessor($node);
+        if (defined($predecessor)) {
+            $node->{data} = $predecessor->{data};
+
+            my $is_leaf       = is_leaf($predecessor);
+            my $is_left_child = is_left_child($predecessor);
+            my $child         = undef;
+
+            if (not $is_leaf) {
+                $child = $predecessor->{left};
+                $child->{parent} = $predecessor->{parent};
+            }
+
+            if (not $is_left_child) {
+                $predecessor->{parent}->{left} = $child;
+            } else {
+                $predecessor->{parent}->{right} = $child;
+            }
+
+            return $node, $predecessor;
+        }
+    } # if has_left_child($node)
+
+    if (has_right_child($node)) {
+        my $successor = successor($node);
+        if (defined($successor)) {
+            $node->{data} = $successor->{data};
+
+            my $is_leaf       = is_leaf($successor);
+            my $is_left_child = is_left_child($successor);
+            my $child         = undef;
+
+            if (not $is_leaf) {
+                $child = $successor->{right};
+                $child->{parent} = $successor->{parent};
+            }
+
+            if (not $is_left_child) {
+                $successor->{parent}->{left} = $child;
+            } else {
+                $successor->{parent}->{right} = $child;
+            }
+
+            return $node, $successor;
+        }
+    }
+
+    # the node to be deleted is a leaf
+    if (is_left_child($node)) {
+        $node->{parent}->{left} = undef;
+    } else {
+        $node->{parent}->{right} = undef;
+    }
+    return $node, undef;
+} # delete
 
 sub insert {
     my $self = shift;
