@@ -70,12 +70,13 @@ sub test_in_order {
     foreach my $id (@trees) {
         $total += 1;
 
+        print "test_in_order - $id ... ";
+
         my $in_str = "@{$trees{$id}{in_order}}";
 
         my $expect     = $trees{$id}{sorted};
         my $expect_str = "@{$expect}";
 
-        print "test_in_order - $id ... ";
         if ($in_str eq $expect_str) {
             print "OK\n";
             $cnt += 1;
@@ -129,6 +130,8 @@ sub test_predecessor {
     foreach my $id (@trees) {
         $total += 1;
 
+        print "test_predecessor - $id ... ";
+
         my $sorted  = $trees{$id}{sorted};
         my $tree    = $trees{$id}{tree};
         my $val_cnt = 0;
@@ -147,7 +150,6 @@ sub test_predecessor {
             $val_cnt += 1;
         } # foreach
 
-        print "test_predecessor - $id ... ";
         if ($val_cnt eq (scalar(@{$sorted}) - 1)) {
             print "OK\n";
             $cnt += 1;
@@ -168,6 +170,8 @@ sub test_successor {
     foreach my $id (@trees) {
         $total += 1;
 
+        print "test_successor - $id ... ";
+
         my $sorted  = $trees{$id}{sorted};
         my $tree    = $trees{$id}{tree};
         my $val_cnt = 0;
@@ -186,7 +190,6 @@ sub test_successor {
             $val_cnt += 1;
         } # foreach
 
-        print "test_successor - $id ... ";
         if ($val_cnt eq (scalar(@{$sorted}) - 1)) {
             print "OK\n";
             $cnt += 1;
@@ -207,10 +210,11 @@ sub test_size {
     foreach my $id (@trees) {
         $total += 1;
 
+        print "test_size - $id ... ";
+
         my $sorted  = $trees{$id}{sorted};
         my $tree    = $trees{$id}{tree};
 
-        print "test_size - $id ... ";
         if ($tree->size() == (scalar(@{$sorted}))) {
             print "OK\n";
             $cnt += 1;
@@ -223,8 +227,8 @@ sub test_size {
     return $cnt == $total;
 } # test_size
 
+test_in_order();
+test_pre_order();
 test_size();
 test_predecessor();
 test_successor();
-test_in_order();
-test_pre_order();
