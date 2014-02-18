@@ -169,6 +169,31 @@ sub test_successor {
     return $cnt == $total;
 } # test_successor
 
+sub test_size {
+    print "test_size ... \n";
+
+    my $cnt   = 0;
+    my $total = 0;
+    foreach my $id (@trees) {
+        $total += 1;
+
+        my $sorted  = $trees{$id}{sorted};
+        my $tree    = $trees{$id}{tree};
+
+        print "test_size - $id ... ";
+        if ($tree->size() == (scalar(@{$sorted}))) {
+            print "OK\n";
+            $cnt += 1;
+        } else {
+            print "NG\n";
+        }
+    } # foreach
+
+    print "test_size ... ${cnt}/${total}\n";
+    return $cnt == $total;
+} # test_size
+
 test_in_order();
 test_predecessor();
 test_successor();
+test_size();

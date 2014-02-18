@@ -5,18 +5,29 @@ package BinarySearchTree;
 use strict;
 use warnings;
 
+use constant LEFT_CHILD  => 1;
+use constant RIGHT_CHILD => 2;
+
 sub new {
     my $class = shift || __PACKAGE__;
     my $cmp = shift;
     my $self = {
         root => undef,
         cmp  => $cmp,
+        size => 0,
     };
     return bless $self, $class;
 } # new
 
-use constant LEFT_CHILD  => 1;
-use constant RIGHT_CHILD => 2;
+sub root {
+    my $self = shift;
+    return $self->{root};
+} # root
+
+sub size {
+    my $self = shift;
+    return $self->{size};
+} # size
 
 sub is_root {
     my $node = shift;
@@ -134,6 +145,11 @@ sub search {
     return undef;
 } # search
 
+sub is_empty {
+    my $self = shift;
+    return defined($self->{root});
+} # is_empty
+
 sub in_order {
     my $self = shift;
     my $proc = shift;
@@ -204,6 +220,7 @@ sub delete_node {
                 $predecessor->{parent}->{right} = $child;
             }
 
+            $self->{size} -= 1;
             return $node, $predecessor;
         }
     } # if has_left_child($node)
@@ -228,12 +245,14 @@ sub delete_node {
                 $successor->{parent}->{right} = $child;
             }
 
+            $self->{size} -= 1;
             return $node, $successor;
         }
     } # if has_right_child($node)
 
     if (is_root($node)) {
         $self->{root} = undef;
+        $self->{size} -= 1;
         return $node, undef;
     }
 
@@ -243,6 +262,8 @@ sub delete_node {
     } else {
         $node->{parent}->{right} = undef;
     }
+
+    $self->{size} -= 1;
     return $node, undef;
 } # delete_node
 
@@ -265,6 +286,7 @@ sub insert_node {
 
     if (not defined($self->{root})) {
         $self->{root} = $new_node;
+        $self->{size} += 1;
         return $new_node, undef;
     }
 
@@ -286,6 +308,7 @@ sub insert_node {
         $parent->{right} = $new_node;
     }
 
+    $self->{size} += 1;
     return $new_node, undef;
 } # insert_node
 
