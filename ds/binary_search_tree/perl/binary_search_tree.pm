@@ -18,6 +18,11 @@ sub new {
 use constant LEFT_CHILD  => 1;
 use constant RIGHT_CHILD => 2;
 
+sub is_root {
+    my $node = shift;
+    return !defined($node->{parent});
+} # is_root
+
 sub is_leaf {
     my $node = shift;
     return (!defined($node->{left}) && !defined($node->{right}));
@@ -42,50 +47,6 @@ sub has_right_child {
     my $node = shift;
     return defined($node->{right});
 } # has_right_child
-
-sub search {
-    my $self = shift;
-    my $data = shift;
-
-    my ($node) = $self->search_node($data);
-    if (defined($node)) {
-        return $data;
-    }
-    return undef;
-} # search
-
-sub search_node {
-    my $self = shift;
-    my $data = shift;
-    my $root_node = shift;
-
-    my $node = $root_node || $self->{root};
-    if (not defined($node)) {
-        return undef;
-    }
-
-    while (1) {
-        my $cmp_ret = $self->{cmp}->($data, $node->{data});
-
-        if ($cmp_ret < 0) {
-            if (defined($node->{left})) {
-                $node = $node->{left};
-                next;
-            }
-                
-            return undef, $node, LEFT_CHILD;
-        } elsif ($cmp_ret > 0) {
-            if (defined($node->{right})) {
-                $node = $node->{right};
-                next;
-            }
-                
-            return undef, $node, RIGHT_CHILD;
-        } else {
-            return $node;
-        }
-    } # while
-} # search_node
 
 sub predecessor {
     my $node = shift;
@@ -128,6 +89,50 @@ sub successor {
     } # while
     return $node->{parent};
 } # successor
+
+sub search_node {
+    my $self = shift;
+    my $data = shift;
+    my $root_node = shift;
+
+    my $node = $root_node || $self->{root};
+    if (not defined($node)) {
+        return undef;
+    }
+
+    while (1) {
+        my $cmp_ret = $self->{cmp}->($data, $node->{data});
+
+        if ($cmp_ret < 0) {
+            if (defined($node->{left})) {
+                $node = $node->{left};
+                next;
+            }
+                
+            return undef, $node, LEFT_CHILD;
+        } elsif ($cmp_ret > 0) {
+            if (defined($node->{right})) {
+                $node = $node->{right};
+                next;
+            }
+                
+            return undef, $node, RIGHT_CHILD;
+        } else {
+            return $node;
+        }
+    } # while
+} # search_node
+
+sub search {
+    my $self = shift;
+    my $data = shift;
+
+    my ($node) = $self->search_node($data);
+    if (defined($node)) {
+        return $data;
+    }
+    return undef;
+} # search
 
 sub in_order {
     my $self = shift;
@@ -175,14 +180,9 @@ sub in_order {
     return undef;
 } # in_order
 
-sub delete {
+sub delete_node {
     my $self = shift;
-    my $data = shift;
-
-    my $node = $self->search_node($data);
-    if (not defined($node)) {
-        return undef, undef;
-    }
+    my $node = shift;
 
     if (has_left_child($node)) {
         my $predecessor = predecessor($node);
@@ -230,6 +230,11 @@ sub delete {
 
             return $node, $successor;
         }
+    } # if has_right_child($node)
+
+    if (is_root($node)) {
+        $self->{root} = undef;
+        return $node, undef;
     }
 
     # the node to be deleted is a leaf
@@ -239,26 +244,35 @@ sub delete {
         $node->{parent}->{right} = undef;
     }
     return $node, undef;
-} # delete
+} # delete_node
 
-sub insert {
+sub delete {
     my $self = shift;
     my $data = shift;
-    my $root_node = shift;
 
-    my $new_node = {
-        parent => undef,
-        data   => $data,
-        left   => undef,
-        right  => undef,
-    };
+    my $node = $self->search_node($data);
+    if (not defined($node)) {
+        return undef, undef;
+    }
+
+    return $self->delete_node($node);
+} # delete
+
+sub insert_node {
+    my $self        = shift;
+    my $new_node    = shift;
+    my $root_node   = shift;
 
     if (not defined($self->{root})) {
         $self->{root} = $new_node;
         return $new_node, undef;
     }
 
-    my ($node, $parent, $pos) = $self->search_node($data, $root_node);
+    my ($node, $parent, $pos) = $self->search_node(
+        $new_node->{data},
+        $root_node,
+    );
+
     if (defined($node)) {
         # already inserted
         return $node, 1;
@@ -273,6 +287,21 @@ sub insert {
     }
 
     return $new_node, undef;
+} # insert_node
+
+sub insert {
+    my $self = shift;
+    my $data = shift;
+    my $root_node = shift;
+
+    my $new_node = {
+        parent => undef,
+        data   => $data,
+        left   => undef,
+        right  => undef,
+    };
+
+    return $self->insert_node($new_node, $root_node);
 } # insert
 
 1;
