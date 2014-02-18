@@ -101,12 +101,11 @@ sub successor {
     return $node->{parent};
 } # successor
 
-sub search_node {
+sub search_starting_at_root {
     my $self = shift;
     my $data = shift;
-    my $root_node = shift;
 
-    my $node = $root_node || $self->{root};
+    my $node = $self->{root};
     if (not defined($node)) {
         return undef;
     }
@@ -132,13 +131,79 @@ sub search_node {
             return $node;
         }
     } # while
+} # search_starting_at_root
+
+use constant STARTING_SEARCH       => 0;
+use constant SEARCHING_PREDECESSOR => 1;
+use constant SEARCHING_SUCCESSOR   => 2;
+use constant ENDING_SEARCH         => 3;
+
+sub search_starting_at_given_node {
+    my $self = shift;
+    my $data = shift;
+    my $node = shift;
+
+    $node ||= $self->{root};
+    if (not defined($node)) {
+        return undef;
+    }
+
+    my $direction = STARTING_SEARCH;
+    while (1) {
+        my $cmp_ret = $self->{cmp}->($data, $node->{data});
+
+        if ($cmp_ret < 0) {
+            $direction |= SEARCHING_PREDECESSOR;
+            if ($direction == ENDING_SEARCH) {
+                return undef, $node, LEFT_CHILD;
+            }
+
+            my $predecessor = predecessor($node);
+            if (defined($predecessor)) {
+                $node = $predecessor;
+                next;
+            }
+
+            return undef, $node, LEFT_CHILD;
+        } elsif ($cmp_ret > 0) {
+            $direction |= SEARCHING_SUCCESSOR;
+            if ($direction == ENDING_SEARCH) {
+                return undef, $node, RIGHT_CHILD;
+            }
+
+            my $successor = successor($node);
+            if (defined($successor)) {
+                $node = $successor;
+                next;
+            }
+
+            return undef, $node, RIGHT_CHILD;
+        }
+
+        return $node;
+    } # while
+} # search_starting_at_given_node
+
+sub search_node {
+    my $self = shift;
+    my $data = shift;
+    my $start_node = shift;
+
+    if (defined($start_node) && ($start_node != $self->{root})) {
+        return $self->search_starting_at_given_node(
+            $data,
+            $start_node,
+        );
+    }
+
+    return $self->search_starting_at_root($data);
 } # search_node
 
 sub search {
     my $self = shift;
     my $data = shift;
 
-    my ($node) = $self->search_node($data);
+    my ($node) = $self->search_starting_at_root($data);
     if (defined($node)) {
         return $data;
     }
@@ -300,7 +365,7 @@ sub delete {
     my $self = shift;
     my $data = shift;
 
-    my $node = $self->search_node($data);
+    my $node = $self->search_starting_at_root($data);
     if (not defined($node)) {
         return undef, undef;
     }
@@ -311,7 +376,7 @@ sub delete {
 sub insert_node {
     my $self        = shift;
     my $new_node    = shift;
-    my $root_node   = shift;
+    my $start_node  = shift;
 
     if (not defined($self->{root})) {
         $self->{root} = $new_node;
@@ -319,10 +384,7 @@ sub insert_node {
         return $new_node, undef;
     }
 
-    my ($node, $parent, $pos) = $self->search_node(
-        $new_node->{data},
-        $root_node,
-    );
+    my ($node, $parent, $pos) = $self->search_node($new_node->{data});
 
     if (defined($node)) {
         # already inserted
@@ -344,7 +406,6 @@ sub insert_node {
 sub insert {
     my $self = shift;
     my $data = shift;
-    my $root_node = shift;
 
     my $new_node = {
         parent => undef,
@@ -353,7 +414,7 @@ sub insert {
         right  => undef,
     };
 
-    return $self->insert_node($new_node, $root_node);
+    return $self->insert_node($new_node);
 } # insert
 
 1;
