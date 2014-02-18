@@ -154,40 +154,34 @@ sub in_order {
     my $self = shift;
     my $proc = shift;
 
-    my @stack = ();
     my $node = $self->{root};
-
     while (defined($node)) {
-        if (defined($node->{left})) {
-            push(@stack, $node);
+        if (has_left_child($node)) {
             $node = $node->{left};
             next;
         }
 
         $proc->($node->{data}, $node);
 
-        if (defined($node->{right})) {
-            push(@stack, $node);
+        if (has_right_child($node)) {
             $node = $node->{right};
             next;
         }
         
         while (1) {
-            my $parent = pop(@stack);
-            if (not defined($parent)) {
+            if (is_root($node)) {
                 return undef;
             }
 
-            if (defined($parent->{right}) and $parent->{right} == $node) {
-                $node = $parent;
+            if (is_right_child($node)) {
+                $node = $node->{parent};
                 next;
             }
 
-            $node = $parent;
+            $node = $node->{parent};
             $proc->($node->{data}, $node);
 
-            if (defined($node->{right})) {
-                push @stack, $node;
+            if (has_right_child($node)) {
                 $node = $node->{right};
                 last;
             }
@@ -201,7 +195,6 @@ sub pre_order {
     my $proc = shift;
 
     my $node = $self->{root};
-
     while (defined($node)) {
         $proc->($node->{data}, $node);
 
