@@ -196,6 +196,42 @@ sub in_order {
     return undef;
 } # in_order
 
+sub pre_order {
+    my $self = shift;
+    my $proc = shift;
+
+    my $node = $self->{root};
+
+    while (defined($node)) {
+        $proc->($node->{data}, $node);
+
+        if (has_left_child($node)) {
+            $node = $node->{left};
+            next;
+        }
+
+        if (has_right_child($node)) {
+            $node = $node->{right};
+            next;
+        }
+        
+        while (1) {
+            if (is_root($node)) {
+                return undef;
+            }
+
+            if (is_right_child($node)) {
+                $node = $node->{parent};
+                next;
+            }
+
+            $node = $node->{parent}->{right};
+            last;
+        } # while
+    } # while
+    return undef;
+} # pre_order
+
 sub delete_node {
     my $self = shift;
     my $node = shift;

@@ -70,7 +70,6 @@ sub test_in_order {
     foreach my $id (@trees) {
         $total += 1;
 
-        my $in     = $trees{$id}{in};
         my $in_str = "@{$trees{$id}{in_order}}";
 
         my $expect     = $trees{$id}{sorted};
@@ -90,6 +89,37 @@ sub test_in_order {
     print "test_in_order ... ${cnt}/${total}\n";
     return $cnt == $total;
 } # test_in_order
+
+sub test_pre_order {
+    print "test_pre_order ... \n";
+
+    my $cnt   = 0;
+    my $total = 0;
+    foreach my $id (@trees) {
+        $total += 1;
+
+        print "test_pre_order - $id ... ";
+
+        my $pre = [];
+        $trees{$id}{tree}->pre_order(sub { push(@{$pre}, $_[0]) });
+        my $pre_str = "@{$pre}";
+
+        my $expect     = $trees{$id}{in};
+        my $expect_str = "@{$expect}";
+
+        if ($pre_str eq $expect_str) {
+            print "OK\n";
+            $cnt += 1;
+        } else {
+            print "NG\n";
+            print "[${pre_str}]\n";
+            print "[${expect_str}]\n";
+        }
+    } # foreach
+
+    print "test_pre_order ... ${cnt}/${total}\n";
+    return $cnt == $total;
+} # test_pre_order
 
 sub test_predecessor {
     print "test_predecessor ... \n";
@@ -193,7 +223,8 @@ sub test_size {
     return $cnt == $total;
 } # test_size
 
-test_in_order();
+test_size();
 test_predecessor();
 test_successor();
-test_size();
+test_in_order();
+test_pre_order();
