@@ -20,7 +20,7 @@ sub list_in_order {
     my $tree = shift;
 
     my $arr = [];
-    $tree->in_order(sub { push(@{$arr}, $_[0]) });
+    BinarySearchTree::in_order($tree->root(), sub { push(@{$arr}, $_[0]) });
     return $arr;
 } # list_in_order
 
@@ -51,6 +51,9 @@ my %trees = (
     },
     '09_mid_full_tree' => {
         'in' => [100, 50, 25, 75, 150, 125, 175],
+    },
+    '10_big_full_tree' => {
+        'in' => [100, 50, 25, 12, 27, 75, 60, 90, 150, 125, 112, 127, 175, 160, 190],
     },
 );
 
@@ -102,7 +105,7 @@ sub test_pre_order {
         print "test_pre_order - $id ... ";
 
         my $pre = [];
-        $trees{$id}{tree}->pre_order(sub { push(@{$pre}, $_[0]) });
+        BinarySearchTree::pre_order($trees{$id}{tree}->root(), sub { push(@{$pre}, $_[0]) });
         my $pre_str = "@{$pre}";
 
         my $expect     = $trees{$id}{in};

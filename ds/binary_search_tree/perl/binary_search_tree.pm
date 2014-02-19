@@ -216,10 +216,10 @@ sub is_empty {
 } # is_empty
 
 sub in_order {
-    my $self = shift;
+    my $root = shift;
     my $proc = shift;
 
-    my $node = $self->{root};
+    my $node = $root;
     while (defined($node)) {
         if (has_left_child($node)) {
             $node = $node->{left};
@@ -234,7 +234,7 @@ sub in_order {
         }
         
         while (1) {
-            if (is_root($node)) {
+            if ($node == $root) {
                 return undef;
             }
 
@@ -256,10 +256,10 @@ sub in_order {
 } # in_order
 
 sub pre_order {
-    my $self = shift;
+    my $root = shift;
     my $proc = shift;
 
-    my $node = $self->{root};
+    my $node = $root;
     while (defined($node)) {
         $proc->($node->{data}, $node);
 
@@ -274,7 +274,7 @@ sub pre_order {
         }
         
         while (1) {
-            if (is_root($node)) {
+            if ($node == $root) {
                 return undef;
             }
 
