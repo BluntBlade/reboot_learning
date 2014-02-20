@@ -230,8 +230,46 @@ sub test_size {
     return $cnt == $total;
 } # test_size
 
+sub test_clone {
+    print "test_clone ... \n";
+
+    my $cnt   = 0;
+    my $total = 0;
+    foreach my $id (@trees) {
+        $total += 1;
+
+        print "test_clone - $id ... ";
+
+        my $cloned_one = $trees{$id}{tree}->clone();
+        my $in = [];
+        
+        BinarySearchTree::in_order(
+            $cloned_one->root(),
+            sub { push(@{$in}, $_[0]); },
+        );
+
+        my $in_str = "@{$in}";
+
+        my $expect     = $trees{$id}{sorted};
+        my $expect_str = "@{$expect}";
+
+        if ($in_str eq $expect_str) {
+            print "OK\n";
+            $cnt += 1;
+        } else {
+            print "NG\n";
+            print "[${in_str}]\n";
+            print "[${expect_str}]\n";
+        }
+    } # foreach
+
+    print "test_clone ... ${cnt}/${total}\n";
+    return $cnt == $total;
+} # test_clone
+
 test_in_order();
 test_pre_order();
 test_size();
 test_predecessor();
 test_successor();
+test_clone();

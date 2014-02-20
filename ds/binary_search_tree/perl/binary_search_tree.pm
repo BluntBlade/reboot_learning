@@ -417,6 +417,18 @@ sub insert {
     return $self->insert_node($new_node);
 } # insert
 
+sub clone {
+    my $self = shift;
+
+    my $new_tree = BinarySearchTree->new($self->{cmp});
+    pre_order($self->{root}, sub {
+        my $data = shift;
+        $new_tree->insert($data);
+    });
+
+    return $new_tree;
+} # clone
+
 1;
 
 __END__
