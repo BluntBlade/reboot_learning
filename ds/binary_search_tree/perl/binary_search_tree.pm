@@ -290,6 +290,52 @@ sub pre_order {
     return undef;
 } # pre_order
 
+sub left_rotate {
+    my $node = shift;
+
+    if (not has_right_child($node)) {
+        return $node, undef;
+    }
+
+    my $right_child = $node->{right};
+
+    if (is_left_child($node)) {
+        $node->{parent}->{left} = $right_child;
+    } else {
+        $node->{parent}->{right} = $right_child;
+    }
+
+    $node->{parent}        = $right_child;
+    $node->{right}         = $right_child->{left};
+    $right_child->{parent} = $node->{parent};
+    $right_child->{left}   = $node;
+
+    return $node, $right_child;
+} # left_rotate
+
+sub right_rotate {
+    my $node = shift;
+
+    if (not has_left_child($node)) {
+        return $node, undef;
+    }
+
+    my $left_child = $node->{left};
+
+    if (is_right_child($node)) {
+        $node->{parent}->{right} = $left_child;
+    } else {
+        $node->{parent}->{left} = $left_child;
+    }
+
+    $node->{parent}       = $left_child;
+    $node->{left}         = $left_child->{right};
+    $left_child->{parent} = $node->{parent};
+    $left_child->{right}  = $node;
+
+    return $node, $left_child;
+} # right_rotate
+
 sub delete_node {
     my $self = shift;
     my $node = shift;
