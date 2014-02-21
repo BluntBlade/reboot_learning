@@ -324,6 +324,120 @@ sub test_delete {
     return $cnt == $total;
 } # test_delete
 
+sub test_left_rotate {
+    print "test_left_rotate ... \n";
+
+    my $cnt   = 0;
+    my $total = 0;
+    foreach my $id (@trees) {
+        $total += 1;
+
+        print "test_left_rotate - $id ... ";
+
+        my $tree = $trees{$id}{tree}->clone();
+        my $in = [@{$trees{$id}{in}}];
+
+        my $data_cnt = 0;
+
+        #dump($tree);
+        #print STDERR "-" x 80, "\n";
+
+        for my $data (@{$in}) {
+            #printf STDERR "data=$data\n";
+            my ($node) = $tree->search_node($data);
+            BinarySearchTree::left_rotate($node);
+
+            my $in2 = [];
+            BinarySearchTree::in_order(
+                $tree->root(),
+                sub { push(@{$in2}, $_[0]); },
+            );
+
+            my $in2_str = "@{$in2}";
+            my $expect_str = "@{$trees{$id}{sorted}}";
+
+            if ($in2_str eq $expect_str) {
+                $data_cnt += 1;
+            } else {
+                print STDERR "$in2_str\n";
+                print STDERR "$expect_str\n";
+            }
+
+            #dump($tree);
+            #print STDERR "-" x 80, "\n";
+        } # while
+
+        #print STDERR "=" x 80, "\n";
+
+        if ($data_cnt eq scalar(@{$trees{$id}{in}})) {
+            print "OK\n";
+            $cnt += 1;
+        } else {
+            print "NG\n";
+        }
+    } # foreach
+
+    print "test_left_rotate ... ${cnt}/${total}\n";
+    return $cnt == $total;
+} # test_left_rotate
+
+sub test_right_rotate {
+    print "test_right_rotate ... \n";
+
+    my $cnt   = 0;
+    my $total = 0;
+    foreach my $id (@trees) {
+        $total += 1;
+
+        print "test_right_rotate - $id ... ";
+
+        my $tree = $trees{$id}{tree}->clone();
+        my $in = [@{$trees{$id}{in}}];
+
+        my $data_cnt = 0;
+
+        #dump($tree);
+        #print STDERR "-" x 80, "\n";
+
+        for my $data (@{$in}) {
+            #printf STDERR "data=$data\n";
+            my ($node) = $tree->search_node($data);
+            BinarySearchTree::right_rotate($node);
+
+            my $in2 = [];
+            BinarySearchTree::in_order(
+                $tree->root(),
+                sub { push(@{$in2}, $_[0]); },
+            );
+
+            my $in2_str = "@{$in2}";
+            my $expect_str = "@{$trees{$id}{sorted}}";
+
+            if ($in2_str eq $expect_str) {
+                $data_cnt += 1;
+            } else {
+                print STDERR "$in2_str\n";
+                print STDERR "$expect_str\n";
+            }
+
+            #dump($tree);
+            #print STDERR "-" x 80, "\n";
+        } # while
+
+        #print STDERR "=" x 80, "\n";
+
+        if ($data_cnt eq scalar(@{$trees{$id}{in}})) {
+            print "OK\n";
+            $cnt += 1;
+        } else {
+            print "NG\n";
+        }
+    } # foreach
+
+    print "test_right_rotate ... ${cnt}/${total}\n";
+    return $cnt == $total;
+} # test_right_rotate
+
 test_in_order();
 test_pre_order();
 test_size();
@@ -331,5 +445,7 @@ test_predecessor();
 test_successor();
 test_clone();
 test_delete();
+test_left_rotate();
+test_right_rotate();
 
 1;

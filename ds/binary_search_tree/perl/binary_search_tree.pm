@@ -31,7 +31,7 @@ sub size {
 
 sub is_root {
     my $node = shift;
-    return !defined($node->{parent});
+    return defined($node->{parent}{root}) && ($node->{parent}{root} == $node);
 } # is_root
 
 sub is_leaf {
@@ -299,16 +299,24 @@ sub left_rotate {
 
     my $right_child = $node->{right};
 
-    if (is_left_child($node)) {
-        $node->{parent}->{left} = $right_child;
+    if (is_root($node)) {
+        $node->{parent}{root} = $right_child;
     } else {
-        $node->{parent}->{right} = $right_child;
+        if (is_left_child($node)) {
+            $node->{parent}{left} = $right_child;
+        } else {
+            $node->{parent}{right} = $right_child;
+        }
     }
 
+    $right_child->{parent} = $node->{parent};
     $node->{parent}        = $right_child;
     $node->{right}         = $right_child->{left};
-    $right_child->{parent} = $node->{parent};
     $right_child->{left}   = $node;
+
+    if (defined($node->{right})) {
+        $node->{right}{parent} = $node;
+    }
 
     return $node, $right_child;
 } # left_rotate
@@ -322,16 +330,24 @@ sub right_rotate {
 
     my $left_child = $node->{left};
 
-    if (is_right_child($node)) {
-        $node->{parent}->{right} = $left_child;
+    if (is_root($node)) {
+        $node->{parent}{root} = $left_child;
     } else {
-        $node->{parent}->{left} = $left_child;
+        if (is_right_child($node)) {
+            $node->{parent}{right} = $left_child;
+        } else {
+            $node->{parent}{left} = $left_child;
+        }
     }
 
+    $left_child->{parent} = $node->{parent};
     $node->{parent}       = $left_child;
     $node->{left}         = $left_child->{right};
-    $left_child->{parent} = $node->{parent};
     $left_child->{right}  = $node;
+
+    if (defined($node->{left})) {
+        $node->{left}{parent} = $node;
+    }
 
     return $node, $left_child;
 } # right_rotate
@@ -391,6 +407,7 @@ sub delete_node {
     } # if has_right_child($node)
 
     if (is_root($node)) {
+        $node->{parent} = undef;
         $self->{root} = undef;
         $self->{size} -= 1;
         return $node, undef;
@@ -425,6 +442,7 @@ sub insert_node {
     my $start_node  = shift;
 
     if (not defined($self->{root})) {
+        $new_node->{parent} = $self;
         $self->{root} = $new_node;
         $self->{size} += 1;
         return $new_node, undef;
