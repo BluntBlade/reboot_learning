@@ -5,7 +5,7 @@ use warnings;
 
 use Data::Dump qw(dump);
 
-require "binary_search_tree.pm";
+use BinarySearchTree;
 
 sub make_tree {
     my $arr = shift;
