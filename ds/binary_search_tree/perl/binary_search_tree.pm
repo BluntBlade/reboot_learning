@@ -283,12 +283,50 @@ sub pre_order {
                 next;
             }
 
-            $node = $node->{parent}->{right};
+            $node = $node->{parent}{right};
             last;
         } # while
     } # while
     return undef;
 } # pre_order
+
+sub post_order {
+    my $root = shift;
+    my $proc = shift;
+
+    my $node = $root;
+    while (defined($node)) {
+        if (has_left_child($node)) {
+            $node = $node->{left};
+            next;
+        }
+
+        if (has_right_child($node)) {
+            $node = $node->{right};
+            next;
+        }
+        
+        # reach a leaf node
+        $proc->($node->{data}, $node);
+
+        # trace back
+        while (1) {
+            if ($node == $root) {
+                return undef;
+            }
+
+            if (is_right_child($node) or not has_right_child($node->{parent})) {
+                $node = $node->{parent};
+                $proc->($node->{data}, $node);
+                next;
+            }
+
+            $node = $node->{parent}{right};
+            last;
+        } # while
+    } # while
+    return undef;
+} # post_order
 
 sub left_rotate {
     my $node = shift;
