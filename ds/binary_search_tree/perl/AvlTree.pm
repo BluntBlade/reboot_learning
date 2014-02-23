@@ -13,22 +13,35 @@ use constant RIGHT_HEAVY => -1;
 
 my $calc_factor_by_children = sub {
     my $node = shift;
-    if (BinarySearchTree::has_left_child($node)) {
-        if (BinarySearchTree::has_right_child($node)) {
-            my $factor = $node->{left}{factor} + $node->{right}{factor};
-            if ($factor == 0 || abs($factor) == 2) {
-                $node->{factor} = BALANCED;
-            } else {
-                $node->{factor} = $factor;
-            }
-        } else {
-            $node->{factor} = $node->{left} + LEFT_HEAVY;
+    if (not BinarySearchTree::has_left_child($node)) {
+        if (not BinarySearchTree::has_right_child($node)) {
+            # the node is a leaf
+            $node->{factor} = BALANCED;
+            return $node;
         }
-    } if (BinarySearchTree::has_right_child($node)) {
-        $node->{factor} = $node->{right} + RIGHT_HEAVY;
+
+        $node->{factor} = RIGHT_HEAVY;
+        return $node;
+    }
+    
+    if (not BinarySearchTree::has_right_child($node)) {
+        $node->{factor} = LEFT_HEAVY;
+        return $node;
     }
 
-    $node->{factor} = BALANCED;
+    if (abs($node->{left}{factor}) == abs($node->{right}{factor})) {
+        $node->{factor} = BALANCED;
+        return $node;
+    }
+
+    if ($node->{left}{factor} == 0) {
+        $node->{factor} = RIGHT_HEAVY;
+        return $node;
+    }
+
+    $node->{factor} = LEFT_HEAVY;
+    return $node;
+
     return $node;
 }; # calc_factor_by_children
 
@@ -47,18 +60,8 @@ sub rebalance_after_insert {
         my $parent = $node->{parent};
 
         if (BinarySearchTree::is_left_child($node)) {
-            if (not BinarySearchTree::has_right_child($parent)) {
-                $parent->{factor} = LEFT_HEAVY + abs($node->{factor});
-            } else {
-                if (abs($node->{factor}) == abs($parent->{right}{factor})) {
-                    $parent->{factor} = BALANCED;
-                } elsif ($node->{factor} != BALANCED) {
-                    $parent->{factor} = LEFT_HEAVY + abs($prev->{factor});
-                } else {
-                    $parent->{factor} = RIGHT_HEAVY - abs($prev->{factor});
-                }
-            } # if
-            
+            $parent->{factor} += LEFT_HEAVY;
+
             if ($parent->{factor} > LEFT_HEAVY) {
                 if (BinarySearchTree::is_right_child($prev)) {
                     # the LR case
@@ -74,17 +77,7 @@ sub rebalance_after_insert {
                 $calc_factor_by_children->($left_child);
             } # if
         } else {
-            if (not BinarySearchTree::has_left_child($parent)) {
-                $parent->{factor} = RIGHT_HEAVY - abs($node->{factor});
-            } else {
-                if (abs($node->{factor}) == abs($parent->{left}{factor})) {
-                    $parent->{factor} = BALANCED;
-                } elsif ($node->{factor} != BALANCED) {
-                    $parent->{factor} = RIGHT_HEAVY - abs($prev->{factor});
-                } else {
-                    $parent->{factor} = LEFT_HEAVY + abs($prev->{factor});
-                }
-            }
+            $parent->{factor} += RIGHT_HEAVY;
             
             if ($parent->{factor} < RIGHT_HEAVY) {
                 if (BinarySearchTree::is_left_child($prev)) {
@@ -123,7 +116,7 @@ sub insert {
 
 use Data::Dump qw(dump);
 
-my $in = [100, 50, 75, 60, 65, 25, 150, 175, 12, 200, 1, 2, 3];
+my $in = [100, 50, 75, 60, 65, 25, 150, 175, 12, 200, 1, 2, 3, 4, 5, 6, 7, 8, 9];
 my $tree = __PACKAGE__->new(sub { $_[0] <=> $_[1] });
 
 for my $i (@$in) {
