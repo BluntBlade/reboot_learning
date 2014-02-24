@@ -55,7 +55,7 @@ sub rebalance_after_insert {
 
     $node->{factor} = BALANCED;
 
-    my $prev = { factor => BALANCED };
+    my $prev = undef;
     while (not BinarySearchTree::is_root($node)) {
         my $parent = $node->{parent};
 
@@ -63,35 +63,69 @@ sub rebalance_after_insert {
             $parent->{factor} += LEFT_HEAVY;
 
             if ($parent->{factor} > LEFT_HEAVY) {
+                my $prev_factor = $prev->{factor};
+
                 if (BinarySearchTree::is_right_child($prev)) {
                     # the LR case
-                    my (undef, $right_child) = BinarySearchTree::left_rotate($node);
-                    $calc_factor_by_children->($node);
-                    $calc_factor_by_children->($right_child);
-                    $node = $right_child;
+                    BinarySearchTree::left_rotate($node);
+                    BinarySearchTree::right_rotate($parent);
+
+                    if ($prev_factor == LEFT_HEAVY) {
+                        $parent->{factor} = RIGHT_HEAVY;
+                        $node->{factor} = BALANCED;
+                        $prev->{factor} = BALANCED;
+                    } elsif ($prev_factor == RIGHT_HEAVY) {
+                        $parent->{factor} = BALANCED;
+                        $node->{factor} = LEFT_HEAVY;
+                        $prev->{factor} = BALANCED;
+                    } else {
+                        $parent->{factor} = BALANCED;
+                        $node->{factor} = BALANCED;
+                        $prev->{factor} = BALANCED;
+                    }
+                } else {
+                    # the LL case
+                    BinarySearchTree::right_rotate($parent);
+
+                    $parent->{factor} = BALANCED;
+                    $node->{factor} = BALANCED;
                 }
 
-                # the LL case
-                my (undef, $left_child) = BinarySearchTree::right_rotate($parent);
-                $calc_factor_by_children->($parent);
-                $calc_factor_by_children->($left_child);
+                last;
             } # if
         } else {
             $parent->{factor} += RIGHT_HEAVY;
             
             if ($parent->{factor} < RIGHT_HEAVY) {
+                my $prev_factor = $prev->{factor};
+
                 if (BinarySearchTree::is_left_child($prev)) {
                     # the RL case
-                    my (undef, $left_child) = BinarySearchTree::right_rotate($node);
-                    $calc_factor_by_children->($node);
-                    $calc_factor_by_children->($left_child);
-                    $node = $left_child;
+                    BinarySearchTree::right_rotate($node);
+                    BinarySearchTree::left_rotate($parent);
+
+                    if ($prev_factor == RIGHT_HEAVY) {
+                        $parent->{factor} = LEFT_HEAVY;
+                        $node->{factor} = BALANCED;
+                        $prev->{factor} = BALANCED;
+                    } elsif ($prev_factor == LEFT_HEAVY) {
+                        $parent->{factor} = BALANCED;
+                        $node->{factor} = RIGHT_HEAVY;
+                        $prev->{factor} = BALANCED;
+                    } else {
+                        $parent->{factor} = BALANCED;
+                        $node->{factor} = BALANCED;
+                        $prev->{factor} = BALANCED;
+                    }
+                } else {
+                    # the RR case
+                    BinarySearchTree::left_rotate($parent);
+
+                    $parent->{factor} = BALANCED;
+                    $node->{factor} = BALANCED;
                 }
 
-                # the RR case
-                my (undef, $right_child) = BinarySearchTree::left_rotate($parent);
-                $calc_factor_by_children->($parent);
-                $calc_factor_by_children->($right_child);
+                last;
             } # if
         } # if
 
