@@ -365,15 +365,15 @@ sub test_delete {
     return $cnt == $total;
 } # test_delete
 
-sub test_left_rotate {
-    print "test_left_rotate ... \n";
+sub test_rotate_to_left {
+    print "test_rotate_to_left ... \n";
 
     my $cnt   = 0;
     my $total = 0;
     foreach my $id (@trees) {
         $total += 1;
 
-        print "test_left_rotate - $id ... ";
+        print "test_rotate_to_left - $id ... ";
 
         my $tree = $trees{$id}{tree}->clone();
         my $input = [@{$trees{$id}{input}}];
@@ -386,7 +386,7 @@ sub test_left_rotate {
         for my $data (@{$input}) {
             #printf STDERR "data=$data\n";
             my ($node) = $tree->search_node($data);
-            BinarySearchTree::left_rotate($node);
+            BinarySearchTree::rotate_to_left($node);
 
             my $in2 = [];
             BinarySearchTree::in_order(
@@ -418,19 +418,19 @@ sub test_left_rotate {
         }
     } # foreach
 
-    print "test_left_rotate ... ${cnt}/${total}\n";
+    print "test_rotate_to_left ... ${cnt}/${total}\n";
     return $cnt == $total;
-} # test_left_rotate
+} # test_rotate_to_left
 
-sub test_right_rotate {
-    print "test_right_rotate ... \n";
+sub test_rotate_to_right {
+    print "test_rotate_to_right ... \n";
 
     my $cnt   = 0;
     my $total = 0;
     foreach my $id (@trees) {
         $total += 1;
 
-        print "test_right_rotate - $id ... ";
+        print "test_rotate_to_right - $id ... ";
 
         my $tree = $trees{$id}{tree}->clone();
         my $input = [@{$trees{$id}{input}}];
@@ -443,7 +443,7 @@ sub test_right_rotate {
         for my $data (@{$input}) {
             #printf STDERR "data=$data\n";
             my ($node) = $tree->search_node($data);
-            BinarySearchTree::right_rotate($node);
+            BinarySearchTree::rotate_to_right($node);
 
             my $in2 = [];
             BinarySearchTree::in_order(
@@ -475,9 +475,9 @@ sub test_right_rotate {
         }
     } # foreach
 
-    print "test_right_rotate ... ${cnt}/${total}\n";
+    print "test_rotate_to_right ... ${cnt}/${total}\n";
     return $cnt == $total;
-} # test_right_rotate
+} # test_rotate_to_right
 
 test_in_order();
 test_pre_order();
@@ -487,7 +487,7 @@ test_predecessor();
 test_successor();
 test_clone();
 test_delete();
-test_left_rotate();
-test_right_rotate();
+test_rotate_to_left();
+test_rotate_to_right();
 
 1;

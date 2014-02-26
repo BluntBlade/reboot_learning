@@ -67,8 +67,8 @@ sub rebalance_after_insert {
 
                 if (BinarySearchTree::is_right_child($prev)) {
                     # the LR case
-                    BinarySearchTree::left_rotate($node);
-                    BinarySearchTree::right_rotate($parent);
+                    BinarySearchTree::rotate_to_left($node);
+                    BinarySearchTree::rotate_to_right($parent);
 
                     if ($prev_factor == LEFT_HEAVY) {
                         $parent->{factor} = RIGHT_HEAVY;
@@ -85,7 +85,7 @@ sub rebalance_after_insert {
                     }
                 } else {
                     # the LL case
-                    BinarySearchTree::right_rotate($parent);
+                    BinarySearchTree::rotate_to_right($parent);
 
                     $parent->{factor} = BALANCED;
                     $node->{factor} = BALANCED;
@@ -101,8 +101,8 @@ sub rebalance_after_insert {
 
                 if (BinarySearchTree::is_left_child($prev)) {
                     # the RL case
-                    BinarySearchTree::right_rotate($node);
-                    BinarySearchTree::left_rotate($parent);
+                    BinarySearchTree::rotate_to_right($node);
+                    BinarySearchTree::rotate_to_left($parent);
 
                     if ($prev_factor == RIGHT_HEAVY) {
                         $parent->{factor} = LEFT_HEAVY;
@@ -119,7 +119,7 @@ sub rebalance_after_insert {
                     }
                 } else {
                     # the RR case
-                    BinarySearchTree::left_rotate($parent);
+                    BinarySearchTree::rotate_to_left($parent);
 
                     $parent->{factor} = BALANCED;
                     $node->{factor} = BALANCED;
@@ -166,7 +166,7 @@ sub rebalance_after_delete {
             my $has_right_child = BinarySearchTree::has_right_child($left_child);
 
             if ($has_left_child) {
-                BinarySearchTree::right_rotate($node);
+                BinarySearchTree::rotate_to_right($node);
 
                 if ($has_right_child) {
                     $node->{factor} = LEFT_HEAVY;
@@ -178,8 +178,8 @@ sub rebalance_after_delete {
 
                 $node = $left_child;
             } elsif ($has_right_child) {
-                my (undef, $lr_grandchild) = BinarySearchTree::left_rotate($left_child);
-                BinarySearchTree::right_rotate($node);
+                my (undef, $lr_grandchild) = BinarySearchTree::rotate_to_left($left_child);
+                BinarySearchTree::rotate_to_right($node);
 
                 $node->{factor} = BALANCED;
                 $left_child->{factor} = BALANCED;
@@ -196,7 +196,7 @@ sub rebalance_after_delete {
             my $has_left_child = BinarySearchTree::has_left_child($right_child);
 
             if ($has_right_child) {
-                BinarySearchTree::left_rotate($node);
+                BinarySearchTree::rotate_to_left($node);
 
                 if ($has_left_child) {
                     $node->{factor} = RIGHT_HEAVY;
@@ -208,8 +208,8 @@ sub rebalance_after_delete {
 
                 $node = $right_child;
             } elsif ($has_right_child) {
-                my (undef, $rl_grandchild) = BinarySearchTree::right_rotate($right_child);
-                BinarySearchTree::right_rotate($node);
+                my (undef, $rl_grandchild) = BinarySearchTree::rotate_to_right($right_child);
+                BinarySearchTree::rotate_to_right($node);
 
                 $node->{factor} = BALANCED;
                 $right_child->{factor} = BALANCED;

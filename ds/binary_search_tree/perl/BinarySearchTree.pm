@@ -329,7 +329,7 @@ sub post_order {
     return undef;
 } # post_order
 
-sub left_rotate {
+sub rotate_to_left {
     my $node = shift;
 
     if (not has_right_child($node)) {
@@ -358,9 +358,9 @@ sub left_rotate {
     }
 
     return $node, $right_child;
-} # left_rotate
+} # rotate_to_left
 
-sub right_rotate {
+sub rotate_to_right {
     my $node = shift;
 
     if (not has_left_child($node)) {
@@ -389,7 +389,7 @@ sub right_rotate {
     }
 
     return $node, $left_child;
-} # right_rotate
+} # rotate_to_right
 
 sub delete_node {
     my $self = shift;
