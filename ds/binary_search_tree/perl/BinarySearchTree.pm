@@ -5,30 +5,11 @@ package BinarySearchTree;
 use strict;
 use warnings;
 
+require Exporter;
+
 use constant ROOT        => 0;
 use constant LEFT_CHILD  => 1;
 use constant RIGHT_CHILD => 2;
-
-sub new {
-    my $class = shift || __PACKAGE__;
-    my $cmp = shift;
-    my $self = {
-        root => undef,
-        cmp  => $cmp,
-        size => 0,
-    };
-    return bless $self, $class;
-} # new
-
-sub root {
-    my $self = shift;
-    return $self->{root};
-} # root
-
-sub size {
-    my $self = shift;
-    return $self->{size};
-} # size
 
 sub is_root {
     my $node = shift;
@@ -101,120 +82,6 @@ sub successor {
     } # while
     return $node->{parent};
 } # successor
-
-sub search_starting_at_root {
-    my $self = shift;
-    my $data = shift;
-
-    my $node = $self->{root};
-    if (not defined($node)) {
-        return undef;
-    }
-
-    while (1) {
-        my $cmp_ret = $self->{cmp}->($data, $node->{data});
-
-        if ($cmp_ret < 0) {
-            if (defined($node->{left})) {
-                $node = $node->{left};
-                next;
-            }
-                
-            return undef, $node, LEFT_CHILD;
-        } elsif ($cmp_ret > 0) {
-            if (defined($node->{right})) {
-                $node = $node->{right};
-                next;
-            }
-                
-            return undef, $node, RIGHT_CHILD;
-        } else {
-            return $node;
-        }
-    } # while
-} # search_starting_at_root
-
-use constant STARTING_SEARCH       => 0;
-use constant SEARCHING_PREDECESSOR => 1;
-use constant SEARCHING_SUCCESSOR   => 2;
-use constant ENDING_SEARCH         => 3;
-
-sub search_starting_at_given_node {
-    my $self = shift;
-    my $data = shift;
-    my $node = shift;
-
-    $node ||= $self->{root};
-    if (not defined($node)) {
-        return undef;
-    }
-
-    my $direction = STARTING_SEARCH;
-    while (1) {
-        my $cmp_ret = $self->{cmp}->($data, $node->{data});
-
-        if ($cmp_ret < 0) {
-            $direction |= SEARCHING_PREDECESSOR;
-            if ($direction == ENDING_SEARCH) {
-                return undef, $node, LEFT_CHILD;
-            }
-
-            my $predecessor = predecessor($node);
-            if (defined($predecessor)) {
-                $node = $predecessor;
-                next;
-            }
-
-            return undef, $node, LEFT_CHILD;
-        } elsif ($cmp_ret > 0) {
-            $direction |= SEARCHING_SUCCESSOR;
-            if ($direction == ENDING_SEARCH) {
-                return undef, $node, RIGHT_CHILD;
-            }
-
-            my $successor = successor($node);
-            if (defined($successor)) {
-                $node = $successor;
-                next;
-            }
-
-            return undef, $node, RIGHT_CHILD;
-        }
-
-        return $node;
-    } # while
-} # search_starting_at_given_node
-
-sub search_node {
-    my $self = shift;
-    my $data = shift;
-    my $start_node = shift;
-
-    if (defined($start_node) && ($start_node != $self->{root})) {
-        return $self->search_starting_at_given_node(
-            $data,
-            $start_node,
-        );
-    }
-
-    return $self->search_starting_at_root($data);
-} # search_node
-
-sub search {
-    my $self = shift;
-    my $data = shift;
-
-    my ($node) = $self->search_starting_at_root($data);
-    if (defined($node)) {
-        return $data;
-    }
-    return undef;
-} # search
-
-sub is_empty {
-    my $self = shift;
-    return defined($self->{root});
-} # is_empty
 
 sub in_order {
     my $root = shift;
@@ -390,6 +257,171 @@ sub rotate_to_right {
 
     return $node, $left_child;
 } # rotate_to_right
+
+my @export_symbols = qw(
+    ROOT
+    LEFT_CHILD
+    RIGHT_CHILD
+
+    is_root
+    is_leaf
+    is_left_child
+    is_right_child
+    has_left_child
+    has_right_child
+
+    predecessor
+    successor
+
+    in_order
+    pre_order
+    post_order
+
+    rotate_to_left
+    rotate_to_right
+);
+
+our @ISA = qw(Exporter);
+
+our @EXPORT_OK = @export_symbols;
+our %EXPORT_TAGS = (
+    BST => [@export_symbols]
+);
+
+sub new {
+    my $class = shift || __PACKAGE__;
+    my $cmp = shift;
+    my $self = {
+        root => undef,
+        cmp  => $cmp,
+        size => 0,
+    };
+    return bless $self, $class;
+} # new
+
+sub root {
+    my $self = shift;
+    return $self->{root};
+} # root
+
+sub size {
+    my $self = shift;
+    return $self->{size};
+} # size
+
+sub search_starting_at_root {
+    my $self = shift;
+    my $data = shift;
+
+    my $node = $self->{root};
+    if (not defined($node)) {
+        return undef;
+    }
+
+    while (1) {
+        my $cmp_ret = $self->{cmp}->($data, $node->{data});
+
+        if ($cmp_ret < 0) {
+            if (defined($node->{left})) {
+                $node = $node->{left};
+                next;
+            }
+                
+            return undef, $node, LEFT_CHILD;
+        } elsif ($cmp_ret > 0) {
+            if (defined($node->{right})) {
+                $node = $node->{right};
+                next;
+            }
+                
+            return undef, $node, RIGHT_CHILD;
+        } else {
+            return $node;
+        }
+    } # while
+} # search_starting_at_root
+
+use constant STARTING_SEARCH       => 0;
+use constant SEARCHING_PREDECESSOR => 1;
+use constant SEARCHING_SUCCESSOR   => 2;
+use constant ENDING_SEARCH         => 3;
+
+sub search_starting_at_given_node {
+    my $self = shift;
+    my $data = shift;
+    my $node = shift;
+
+    $node ||= $self->{root};
+    if (not defined($node)) {
+        return undef;
+    }
+
+    my $direction = STARTING_SEARCH;
+    while (1) {
+        my $cmp_ret = $self->{cmp}->($data, $node->{data});
+
+        if ($cmp_ret < 0) {
+            $direction |= SEARCHING_PREDECESSOR;
+            if ($direction == ENDING_SEARCH) {
+                return undef, $node, LEFT_CHILD;
+            }
+
+            my $predecessor = predecessor($node);
+            if (defined($predecessor)) {
+                $node = $predecessor;
+                next;
+            }
+
+            return undef, $node, LEFT_CHILD;
+        } elsif ($cmp_ret > 0) {
+            $direction |= SEARCHING_SUCCESSOR;
+            if ($direction == ENDING_SEARCH) {
+                return undef, $node, RIGHT_CHILD;
+            }
+
+            my $successor = successor($node);
+            if (defined($successor)) {
+                $node = $successor;
+                next;
+            }
+
+            return undef, $node, RIGHT_CHILD;
+        }
+
+        return $node;
+    } # while
+} # search_starting_at_given_node
+
+sub search_node {
+    my $self = shift;
+    my $data = shift;
+    my $start_node = shift;
+
+    if (defined($start_node) && ($start_node != $self->{root})) {
+        return $self->search_starting_at_given_node(
+            $data,
+            $start_node,
+        );
+    }
+
+    return $self->search_starting_at_root($data);
+} # search_node
+
+sub search {
+    my $self = shift;
+    my $data = shift;
+
+    my ($node) = $self->search_starting_at_root($data);
+    if (defined($node)) {
+        return $data;
+    }
+    return undef;
+} # search
+
+sub is_empty {
+    my $self = shift;
+    return defined($self->{root});
+} # is_empty
 
 sub delete_node {
     my $self = shift;
