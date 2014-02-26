@@ -5,6 +5,7 @@ package BinarySearchTree;
 use strict;
 use warnings;
 
+use constant ROOT        => 0;
 use constant LEFT_CHILD  => 1;
 use constant RIGHT_CHILD => 2;
 
@@ -403,6 +404,8 @@ sub delete_node {
             my $is_left_child = is_left_child($predecessor);
             my $child         = undef;
 
+            my $deleting_pos = $is_left_child ? LEFT_CHILD : RIGHT_CHILD;
+
             if (not $is_leaf) {
                 $child = $predecessor->{left};
                 $child->{parent} = $predecessor->{parent};
@@ -415,7 +418,7 @@ sub delete_node {
             }
 
             $self->{size} -= 1;
-            return $node, $predecessor;
+            return $node, $predecessor, $deleting_pos;
         }
     } # if has_left_child($node)
 
@@ -428,6 +431,8 @@ sub delete_node {
             my $is_left_child = is_left_child($successor);
             my $child         = undef;
 
+            my $deleting_pos = $is_left_child ? LEFT_CHILD : RIGHT_CHILD;
+
             if (not $is_leaf) {
                 $child = $successor->{right};
                 $child->{parent} = $successor->{parent};
@@ -439,8 +444,9 @@ sub delete_node {
                 $successor->{parent}->{right} = $child;
             }
 
+
             $self->{size} -= 1;
-            return $node, $successor;
+            return $node, $successor, $deleting_pos;
         }
     } # if has_right_child($node)
 
@@ -448,18 +454,21 @@ sub delete_node {
         $node->{parent} = undef;
         $self->{root} = undef;
         $self->{size} -= 1;
-        return $node, undef;
+        return $node, undef, ROOT;
     }
 
     # the node to be deleted is a leaf
+    my $deleting_pos = undef;
     if (is_left_child($node)) {
+        $deleting_pos = LEFT_CHILD;
         $node->{parent}->{left} = undef;
     } else {
+        $deleting_pos = RIGHT_CHILD;
         $node->{parent}->{right} = undef;
     }
 
     $self->{size} -= 1;
-    return $node, undef;
+    return $node, $node, $deleting_pos;
 } # delete_node
 
 sub delete {

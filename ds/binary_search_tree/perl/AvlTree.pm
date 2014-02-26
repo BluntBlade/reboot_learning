@@ -138,6 +138,106 @@ sub rebalance_after_insert {
     } # while
 } # rebalance_after_insert
 
+sub rebalance_after_delete {
+    my $deleting_node = shift;
+    my $deleted_node  = shift;
+    my $deleted_pos   = shift;
+
+    if ($deleted_pos == BinarySearchTree::ROOT) {
+        return;
+    }
+
+    my $prev     = $deleted_node;
+    my $prev_pos = $deleted_pos;
+    my $node     = $deleted_node->{parent};
+    while (1) {
+        if ($prev_pos == BinarySearchTree::LEFT_CHILD) {
+            $node->{factor} -= LEFT_HEAVY;
+        } else {
+            $node->{factor} -= RIGHT_HEAVY;
+        }
+
+        if ($node->{factor} > LEFT_HEAVY) {
+            ### lean to left too much
+            ### unbalancing
+ 
+            my $left_child = $node->{left};
+            my $has_left_child = BinarySearchTree::has_left_child($left_child);
+            my $has_right_child = BinarySearchTree::has_right_child($left_child);
+
+            if ($has_left_child) {
+                BinarySearchTree::right_rotate($node);
+
+                if ($has_right_child) {
+                    $node->{factor} = LEFT_HEAVY;
+                    $left_child->{factor} = RIGHT_HEAVY;
+                } else {
+                    $node->{factor} = BALANCED;
+                    $left_child->{factor} = BALANCED;
+                }
+
+                $node = $left_child;
+            } elsif ($has_right_child) {
+                my (undef, $lr_grandchild) = BinarySearchTree::left_rotate($left_child);
+                BinarySearchTree::right_rotate($node);
+
+                $node->{factor} = BALANCED;
+                $left_child->{factor} = BALANCED;
+                $lr_grandchild->{factor} = BALANCED;
+
+                $node = $lr_grandchild;
+            }
+        } elsif ($node->{factor} < RIGHT_HEAVY) {
+            ### lean to right too much
+            ### unbalancing
+
+            my $right_child = $node->{right};
+            my $has_right_child = BinarySearchTree::has_right_child($right_child);
+            my $has_left_child = BinarySearchTree::has_left_child($right_child);
+
+            if ($has_right_child) {
+                BinarySearchTree::left_rotate($node);
+
+                if ($has_left_child) {
+                    $node->{factor} = RIGHT_HEAVY;
+                    $right_child->{factor} = LEFT_HEAVY;
+                } else {
+                    $node->{factor} = BALANCED;
+                    $right_child->{factor} = BALANCED;
+                }
+
+                $node = $right_child;
+            } elsif ($has_right_child) {
+                my (undef, $rl_grandchild) = BinarySearchTree::right_rotate($right_child);
+                BinarySearchTree::right_rotate($node);
+
+                $node->{factor} = BALANCED;
+                $right_child->{factor} = BALANCED;
+                $rl_grandchild->{factor} = BALANCED;
+
+                $node = $rl_grandchild;
+            }
+        }
+
+        if (BinarySearchTree::is_root($node)) {
+            ### it is the root 
+            last;
+        }
+
+        if ($node->{factor} == BALANCED) {
+            $prev = $node;
+            $prev_pos = BinarySearchTree::is_left_child($node) ? BinarySearchTree::LEFT_CHILD
+                                                               : BinarySearchTree::RIGHT_CHILD
+                                                               ;
+            $node = $node->{parent};
+            next;
+        }
+
+        # rebalanced
+        last;
+    } # while
+} # rebalance_after_delete
+
 our @ISA = qw(BinarySearchTree);
 
 sub insert {
@@ -148,6 +248,14 @@ sub insert {
     return rebalance_after_insert(@ret);
 } # insert
 
+sub delete {
+    my $self = shift;
+    my $data = shift;
+
+    my @ret  = $self->BinarySearchTree::delete($data);
+    return rebalance_after_delete(@ret);
+} # delete
+
 use Data::Dump qw(dump);
 
 my $in = [100, 50, 75, 60, 65, 25, 150, 175, 12, 200, 1, 2, 3, 4, 5, 6, 7, 8, 9];
@@ -157,6 +265,16 @@ for my $i (@$in) {
     print STDERR "$i\n";
     $tree->insert($i);
     dump($tree->{root});
+    print STDERR "-" x 80, "\n";
+} # for
+
+print STDERR "=" x 80, "\n";
+
+for my $i (@$in) {
+    print STDERR "$i\n";
+    $tree->delete($i);
+    dump($tree->{root});
+    print STDERR "-" x 80, "\n";
 } # for
 
 1;
