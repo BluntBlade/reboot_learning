@@ -444,9 +444,9 @@ sub delete_node {
             }
 
             if ($is_left_child) {
-                $predecessor->{parent}->{left} = $child;
+                $predecessor->{parent}{left} = $child;
             } else {
-                $predecessor->{parent}->{right} = $child;
+                $predecessor->{parent}{right} = $child;
             }
 
             $self->{size} -= 1;
@@ -471,9 +471,9 @@ sub delete_node {
             }
 
             if ($is_left_child) {
-                $successor->{parent}->{left} = $child;
+                $successor->{parent}{left} = $child;
             } else {
-                $successor->{parent}->{right} = $child;
+                $successor->{parent}{right} = $child;
             }
 
 
@@ -493,10 +493,10 @@ sub delete_node {
     my $deleting_pos = undef;
     if (is_left_child($node)) {
         $deleting_pos = LEFT_CHILD;
-        $node->{parent}->{left} = undef;
+        $node->{parent}{left} = undef;
     } else {
         $deleting_pos = RIGHT_CHILD;
-        $node->{parent}->{right} = undef;
+        $node->{parent}{right} = undef;
     }
 
     $self->{size} -= 1;
