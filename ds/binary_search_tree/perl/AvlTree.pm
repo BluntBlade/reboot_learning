@@ -11,41 +11,7 @@ use constant BALANCED    => 0;
 use constant LEFT_HEAVY  => +1;
 use constant RIGHT_HEAVY => -1;
 
-my $calc_factor_by_children = sub {
-    my $node = shift;
-    if (not has_left_child($node)) {
-        if (not has_right_child($node)) {
-            # the node is a leaf
-            $node->{factor} = BALANCED;
-            return $node;
-        }
-
-        $node->{factor} = RIGHT_HEAVY;
-        return $node;
-    }
-    
-    if (not has_right_child($node)) {
-        $node->{factor} = LEFT_HEAVY;
-        return $node;
-    }
-
-    if (abs($node->{left}{factor}) == abs($node->{right}{factor})) {
-        $node->{factor} = BALANCED;
-        return $node;
-    }
-
-    if ($node->{left}{factor} == 0) {
-        $node->{factor} = RIGHT_HEAVY;
-        return $node;
-    }
-
-    $node->{factor} = LEFT_HEAVY;
-    return $node;
-
-    return $node;
-}; # calc_factor_by_children
-
-sub rebalance_after_insert {
+sub rebalance_after_inserted {
     my $node                      = shift;
     my $inserted_before_this_time = shift;
 
@@ -136,9 +102,9 @@ sub rebalance_after_insert {
         $prev = $node;
         $node = $node->{parent};
     } # while
-} # rebalance_after_insert
+} # rebalance_after_inserted
 
-sub rebalance_after_delete {
+sub rebalance_after_deleted {
     my $deleting_node = shift;
     my $deleted_node  = shift;
     my $deleted_pos   = shift;
@@ -234,7 +200,7 @@ sub rebalance_after_delete {
         # rebalanced
         last;
     } # while
-} # rebalance_after_delete
+} # rebalance_after_deleted
 
 our @ISA = qw(BinarySearchTree);
 
@@ -243,7 +209,7 @@ sub insert {
     my $data = shift;
 
     my @ret  = $self->BinarySearchTree::insert($data);
-    return rebalance_after_insert(@ret);
+    return rebalance_after_inserted(@ret);
 } # insert
 
 sub delete {
@@ -251,29 +217,8 @@ sub delete {
     my $data = shift;
 
     my @ret  = $self->BinarySearchTree::delete($data);
-    return rebalance_after_delete(@ret);
+    return rebalance_after_deleted(@ret);
 } # delete
-
-use Data::Dump qw(dump);
-
-my $in = [100, 50, 75, 60, 65, 25, 150, 175, 12, 200, 1, 2, 3, 4, 5, 6, 7, 8, 9];
-my $tree = __PACKAGE__->new(sub { $_[0] <=> $_[1] });
-
-for my $i (@$in) {
-    print STDERR "$i\n";
-    $tree->insert($i);
-    dump($tree->{root});
-    print STDERR "-" x 80, "\n";
-} # for
-
-print STDERR "=" x 80, "\n";
-
-for my $i (@$in) {
-    print STDERR "$i\n";
-    $tree->delete($i);
-    dump($tree->{root});
-    print STDERR "-" x 80, "\n";
-} # for
 
 1;
 
