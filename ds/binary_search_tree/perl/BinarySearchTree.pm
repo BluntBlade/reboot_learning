@@ -1,292 +1,67 @@
 #!/usr/bin/env perl
 
-package BinarySearchTree;
-
 use strict;
 use warnings;
 
-require Exporter;
+package BinarySearchTree::Node;
 
-use constant ROOT        => 0;
-use constant LEFT_CHILD  => 1;
-use constant RIGHT_CHILD => 2;
+use BinaryTree;
 
-sub is_root {
-    my $node = shift;
-    return defined($node->{parent}{root}) && ($node->{parent}{root} == $node);
-} # is_root
-
-sub is_leaf {
-    my $node = shift;
-    return (!defined($node->{left}) && !defined($node->{right}));
-} # is_leaf
-
-sub is_left_child {
-    my $node = shift;
-    return (defined($node->{parent}) && defined($node->{parent}{left}) && $node->{parent}{left} == $node);
-} # is_left_child
-
-sub is_right_child {
-    my $node = shift;
-    return (defined($node->{parent}) && defined($node->{parent}{right}) && $node->{parent}{right} == $node);
-} # is_right_child
-
-sub has_left_child {
-    my $node = shift;
-    return defined($node->{left});
-} # has_left_child
-
-sub has_right_child {
-    my $node = shift;
-    return defined($node->{right});
-} # has_right_child
+our @ISA = qw(BinaryTree::Node);
 
 sub predecessor {
-    my $node = shift;
+    my $self = shift;
 
-    if (not defined($node)) {
+    if (not defined($self)) {
         return undef;
     }
 
-    if (has_left_child($node)) {
+    my $node = $self;
+    if ($node->has_left_child()) {
         $node = $node->{left};
-        while (has_right_child($node)) {
+
+        while ($node->has_right_child()) {
             $node = $node->{right};
         } # while
-        return $node;
-    }
 
-    while (is_left_child($node)) {
+        return $node;
+    } # if
+
+    while ($node->is_left_child()) {
         $node = $node->{parent};
-    }
+    } # while
     return $node->{parent};
 } # predecessor
 
 sub successor {
-    my $node = shift;
+    my $self = shift;
 
-    if (not defined($node)) {
+    if (not defined($self)) {
         return undef;
     }
 
-    if (has_right_child($node)) {
+    my $node = $self;
+    if ($node->has_right_child()) {
         $node = $node->{right};
-        while (defined($node->{left})) {
+
+        while ($node->has_left_child()) {
             $node = $node->{left};
         } # while
-        return $node;
-    }
 
-    while (is_right_child($node)) {
+        return $node;
+    } # if
+
+    while ($node->is_right_child()) {
         $node = $node->{parent};
     } # while
     return $node->{parent};
 } # successor
 
-sub in_order {
-    my $root = shift;
-    my $proc = shift;
+package BinarySearchTree;
 
-    my $node = $root;
-    while (defined($node)) {
-        if (has_left_child($node)) {
-            $node = $node->{left};
-            next;
-        }
-
-        $proc->($node->{data}, $node);
-
-        if (has_right_child($node)) {
-            $node = $node->{right};
-            next;
-        }
-        
-        while (1) {
-            if ($node == $root) {
-                return undef;
-            }
-
-            if (is_right_child($node)) {
-                $node = $node->{parent};
-                next;
-            }
-
-            $node = $node->{parent};
-            $proc->($node->{data}, $node);
-
-            if (has_right_child($node)) {
-                $node = $node->{right};
-                last;
-            }
-        } # while
-    } # while
-    return undef;
-} # in_order
-
-sub pre_order {
-    my $root = shift;
-    my $proc = shift;
-
-    my $node = $root;
-    while (defined($node)) {
-        $proc->($node->{data}, $node);
-
-        if (has_left_child($node)) {
-            $node = $node->{left};
-            next;
-        }
-
-        if (has_right_child($node)) {
-            $node = $node->{right};
-            next;
-        }
-        
-        while (1) {
-            if ($node == $root) {
-                return undef;
-            }
-
-            if (is_right_child($node)) {
-                $node = $node->{parent};
-                next;
-            }
-
-            $node = $node->{parent}{right};
-            last;
-        } # while
-    } # while
-    return undef;
-} # pre_order
-
-sub post_order {
-    my $root = shift;
-    my $proc = shift;
-
-    my $node = $root;
-    while (defined($node)) {
-        if (has_left_child($node)) {
-            $node = $node->{left};
-            next;
-        }
-
-        if (has_right_child($node)) {
-            $node = $node->{right};
-            next;
-        }
-        
-        # reach a leaf node
-        $proc->($node->{data}, $node);
-
-        # trace back
-        while (1) {
-            if ($node == $root) {
-                return undef;
-            }
-
-            if (is_right_child($node) or not has_right_child($node->{parent})) {
-                $node = $node->{parent};
-                $proc->($node->{data}, $node);
-                next;
-            }
-
-            $node = $node->{parent}{right};
-            last;
-        } # while
-    } # while
-    return undef;
-} # post_order
-
-sub rotate_to_left {
-    my $node = shift;
-
-    if (not has_right_child($node)) {
-        return $node, undef;
-    }
-
-    my $right_child = $node->{right};
-
-    if (is_root($node)) {
-        $node->{parent}{root} = $right_child;
-    } else {
-        if (is_left_child($node)) {
-            $node->{parent}{left} = $right_child;
-        } else {
-            $node->{parent}{right} = $right_child;
-        }
-    }
-
-    $right_child->{parent} = $node->{parent};
-    $node->{parent}        = $right_child;
-    $node->{right}         = $right_child->{left};
-    $right_child->{left}   = $node;
-
-    if (defined($node->{right})) {
-        $node->{right}{parent} = $node;
-    }
-
-    return $node, $right_child;
-} # rotate_to_left
-
-sub rotate_to_right {
-    my $node = shift;
-
-    if (not has_left_child($node)) {
-        return $node, undef;
-    }
-
-    my $left_child = $node->{left};
-
-    if (is_root($node)) {
-        $node->{parent}{root} = $left_child;
-    } else {
-        if (is_right_child($node)) {
-            $node->{parent}{right} = $left_child;
-        } else {
-            $node->{parent}{left} = $left_child;
-        }
-    }
-
-    $left_child->{parent} = $node->{parent};
-    $node->{parent}       = $left_child;
-    $node->{left}         = $left_child->{right};
-    $left_child->{right}  = $node;
-
-    if (defined($node->{left})) {
-        $node->{left}{parent} = $node;
-    }
-
-    return $node, $left_child;
-} # rotate_to_right
-
-my @export_symbols = qw(
-    ROOT
-    LEFT_CHILD
-    RIGHT_CHILD
-
-    is_root
-    is_leaf
-    is_left_child
-    is_right_child
-    has_left_child
-    has_right_child
-
-    predecessor
-    successor
-
-    in_order
-    pre_order
-    post_order
-
-    rotate_to_left
-    rotate_to_right
-);
-
-our @ISA = qw(Exporter);
-
-our @EXPORT_OK = @export_symbols;
-our %EXPORT_TAGS = (
-    BST => [@export_symbols]
-);
+use constant ROOT        => BinaryTree::ROOT;
+use constant LEFT_CHILD  => BinaryTree::LEFT_CHILD;
+use constant RIGHT_CHILD => BinaryTree::RIGHT_CHILD;
 
 sub new {
     my $class = shift || __PACKAGE__;
@@ -427,13 +202,13 @@ sub delete_node {
     my $self = shift;
     my $node = shift;
 
-    if (has_left_child($node)) {
-        my $predecessor = predecessor($node);
+    if ($node->has_left_child()) {
+        my $predecessor = $node->predecessor();
         if (defined($predecessor)) {
             $node->{data} = $predecessor->{data};
 
-            my $is_leaf       = is_leaf($predecessor);
-            my $is_left_child = is_left_child($predecessor);
+            my $is_leaf       = $predecessor->is_leaf();
+            my $is_left_child = $predecessor->is_left_child();
             my $child         = undef;
 
             my $deleting_pos = $is_left_child ? LEFT_CHILD : RIGHT_CHILD;
@@ -454,13 +229,13 @@ sub delete_node {
         }
     } # if has_left_child($node)
 
-    if (has_right_child($node)) {
-        my $successor = successor($node);
+    if ($node->has_right_child()) {
+        my $successor = $node->successor();
         if (defined($successor)) {
             $node->{data} = $successor->{data};
 
-            my $is_leaf       = is_leaf($successor);
-            my $is_left_child = is_left_child($successor);
+            my $is_leaf       = $successor->is_leaf();
+            my $is_left_child = $successor->is_left_child();
             my $child         = undef;
 
             my $deleting_pos = $is_left_child ? LEFT_CHILD : RIGHT_CHILD;
@@ -482,7 +257,7 @@ sub delete_node {
         }
     } # if has_right_child($node)
 
-    if (is_root($node)) {
+    if ($node->is_root()) {
         $node->{parent} = undef;
         $self->{root} = undef;
         $self->{size} -= 1;
@@ -491,7 +266,7 @@ sub delete_node {
 
     # the node to be deleted is a leaf
     my $deleting_pos = undef;
-    if (is_left_child($node)) {
+    if ($node->is_left_child()) {
         $deleting_pos = LEFT_CHILD;
         $node->{parent}{left} = undef;
     } else {
@@ -550,13 +325,7 @@ sub insert {
     my $self = shift;
     my $data = shift;
 
-    my $new_node = {
-        parent => undef,
-        data   => $data,
-        left   => undef,
-        right  => undef,
-    };
-
+    my $new_node = BinarySearchTree::Node->new($data);
     return $self->insert_node($new_node);
 } # insert
 
@@ -564,7 +333,7 @@ sub clone {
     my $self = shift;
 
     my $new_tree = BinarySearchTree->new($self->{cmp});
-    pre_order($self->{root}, sub {
+    BinaryTree::travel_by_pre_order($self->{root}, sub {
         my $data = shift;
         $new_tree->insert($data);
     });

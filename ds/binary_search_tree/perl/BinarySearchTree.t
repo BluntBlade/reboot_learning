@@ -22,7 +22,7 @@ sub list_in_order {
     my $tree = shift;
 
     my $arr = [];
-    BinarySearchTree::in_order($tree->root(), sub { push(@{$arr}, $_[0]) });
+    BinaryTree::travel_by_in_order($tree->root(), sub { push(@{$arr}, $_[0]) });
     return $arr;
 } # list_in_order
 
@@ -117,7 +117,10 @@ sub test_pre_order {
         print "test_pre_order - $id ... ";
 
         my $pre = [];
-        BinarySearchTree::pre_order($trees{$id}{tree}->root(), sub { push(@{$pre}, $_[0]) });
+        BinaryTree::travel_by_pre_order(
+            $trees{$id}{tree}->root(),
+            sub { push(@{$pre}, $_[0]) }
+        );
         my $pre_str = "@{$pre}";
 
         my $expect     = $trees{$id}{input};
@@ -148,7 +151,10 @@ sub test_post_order {
         print "test_post_order - $id ... ";
 
         my $post = [];
-        BinarySearchTree::post_order($trees{$id}{tree}->root(), sub { push(@{$post}, $_[0]) });
+        BinaryTree::travel_by_post_order(
+            $trees{$id}{tree}->root(),
+            sub { push(@{$post}, $_[0]) }
+        );
         my $post_str = "@{$post}";
 
         my $expect     = $trees{$id}{post};
@@ -186,7 +192,7 @@ sub test_predecessor {
             if (not defined($node)) {
                 last;
             }
-            my $predecessor = BinarySearchTree::predecessor($node);
+            my $predecessor = $node->predecessor();
             if (not defined($predecessor)) {
                 last;
             }
@@ -226,7 +232,7 @@ sub test_successor {
             if (not defined($node)) {
                 last;
             }
-            my $successor = BinarySearchTree::successor($node);
+            my $successor = $node->successor();
             if (not defined($successor)) {
                 last;
             }
@@ -286,7 +292,7 @@ sub test_clone {
         my $cloned_one = $trees{$id}{tree}->clone();
         my $input = [];
         
-        BinarySearchTree::in_order(
+        BinaryTree::travel_by_in_order(
             $cloned_one->root(),
             sub { push(@{$input}, $_[0]); },
         );
@@ -333,7 +339,7 @@ sub test_delete {
             $tree->delete($data);
 
             my $in2 = [];
-            BinarySearchTree::in_order(
+            BinaryTree::travel_by_in_order(
                 $tree->root(),
                 sub { push(@{$in2}, $_[0]); },
             );
@@ -386,10 +392,10 @@ sub test_rotate_to_left {
         for my $data (@{$input}) {
             #printf STDERR "data=$data\n";
             my ($node) = $tree->search_node($data);
-            BinarySearchTree::rotate_to_left($node);
+            $node->rotate_to_left();
 
             my $in2 = [];
-            BinarySearchTree::in_order(
+            BinaryTree::travel_by_in_order(
                 $tree->root(),
                 sub { push(@{$in2}, $_[0]); },
             );
@@ -443,10 +449,10 @@ sub test_rotate_to_right {
         for my $data (@{$input}) {
             #printf STDERR "data=$data\n";
             my ($node) = $tree->search_node($data);
-            BinarySearchTree::rotate_to_right($node);
+            $node->rotate_to_right();
 
             my $in2 = [];
-            BinarySearchTree::in_order(
+            BinaryTree::travel_by_in_order(
                 $tree->root(),
                 sub { push(@{$in2}, $_[0]); },
             );
