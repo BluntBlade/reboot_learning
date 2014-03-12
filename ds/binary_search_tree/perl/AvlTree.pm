@@ -5,7 +5,11 @@ package AvlTree;
 use strict;
 use warnings;
 
-use BinarySearchTree qw(:BST);
+use BinarySearchTree;
+
+use constant ROOT        => BinarySearchTree::ROOT;
+use constant LEFT_CHILD  => BinarySearchTree::LEFT_CHILD;
+use constant RIGHT_CHILD => BinarySearchTree::RIGHT_CHILD;
 
 use constant BALANCED    => 0;
 use constant LEFT_HEAVY  => +1;
@@ -22,19 +26,19 @@ sub rebalance_after_inserted {
     $node->{factor} = BALANCED;
 
     my $prev = undef;
-    while (not is_root($node)) {
+    while (not $node->is_root()) {
         my $parent = $node->{parent};
 
-        if (is_left_child($node)) {
+        if ($node->is_left_child()) {
             $parent->{factor} += LEFT_HEAVY;
 
             if ($parent->{factor} > LEFT_HEAVY) {
                 my $prev_factor = $prev->{factor};
 
-                if (is_right_child($prev)) {
+                if ($prev->is_right_child()) {
                     # the LR case
-                    rotate_to_left($node);
-                    rotate_to_right($parent);
+                    $node->rotate_to_left();
+                    $parent->rotate_to_right();
 
                     if ($prev_factor == LEFT_HEAVY) {
                         $parent->{factor} = RIGHT_HEAVY;
@@ -51,7 +55,7 @@ sub rebalance_after_inserted {
                     }
                 } else {
                     # the LL case
-                    rotate_to_right($parent);
+                    $parent->rotate_to_right();
 
                     $parent->{factor} = BALANCED;
                     $node->{factor} = BALANCED;
@@ -65,10 +69,10 @@ sub rebalance_after_inserted {
             if ($parent->{factor} < RIGHT_HEAVY) {
                 my $prev_factor = $prev->{factor};
 
-                if (is_left_child($prev)) {
+                if ($prev->is_left_child()) {
                     # the RL case
-                    rotate_to_right($node);
-                    rotate_to_left($parent);
+                    $node->rotate_to_right();
+                    $parent->rotate_to_left();
 
                     if ($prev_factor == RIGHT_HEAVY) {
                         $parent->{factor} = LEFT_HEAVY;
@@ -85,7 +89,7 @@ sub rebalance_after_inserted {
                     }
                 } else {
                     # the RR case
-                    rotate_to_left($parent);
+                    $parent->rotate_to_left();
 
                     $parent->{factor} = BALANCED;
                     $node->{factor} = BALANCED;
@@ -95,7 +99,7 @@ sub rebalance_after_inserted {
             } # if
         } # if
 
-        if (is_root($node)) {
+        if ($node->is_root()) {
             last;
         }
 
@@ -128,11 +132,11 @@ sub rebalance_after_deleted {
             ### unbalancing
  
             my $left_child = $node->{left};
-            my $has_left_child = has_left_child($left_child);
-            my $has_right_child = has_right_child($left_child);
+            my $has_left_child = $left_child->has_left_child();
+            my $has_right_child = $left_child->has_right_child();
 
             if ($has_left_child) {
-                rotate_to_right($node);
+                $node->rotate_to_right();
 
                 if ($has_right_child) {
                     $node->{factor} = LEFT_HEAVY;
@@ -144,8 +148,8 @@ sub rebalance_after_deleted {
 
                 $node = $left_child;
             } elsif ($has_right_child) {
-                my (undef, $lr_grandchild) = rotate_to_left($left_child);
-                rotate_to_right($node);
+                my (undef, $lr_grandchild) = $left_child->rotate_to_left();
+                $node->rotate_to_right();
 
                 $node->{factor} = BALANCED;
                 $left_child->{factor} = BALANCED;
@@ -158,11 +162,11 @@ sub rebalance_after_deleted {
             ### unbalancing
 
             my $right_child = $node->{right};
-            my $has_right_child = has_right_child($right_child);
-            my $has_left_child = has_left_child($right_child);
+            my $has_right_child = $right_child->has_right_child();
+            my $has_left_child = $right_child->has_left_child();
 
             if ($has_right_child) {
-                rotate_to_left($node);
+                $node->rotate_to_left();
 
                 if ($has_left_child) {
                     $node->{factor} = RIGHT_HEAVY;
@@ -174,8 +178,8 @@ sub rebalance_after_deleted {
 
                 $node = $right_child;
             } elsif ($has_right_child) {
-                my (undef, $rl_grandchild) = rotate_to_right($right_child);
-                rotate_to_right($node);
+                my (undef, $rl_grandchild) = $right_child->rotate_to_right();
+                $node->rotate_to_right();
 
                 $node->{factor} = BALANCED;
                 $right_child->{factor} = BALANCED;
@@ -185,14 +189,14 @@ sub rebalance_after_deleted {
             }
         }
 
-        if (is_root($node)) {
+        if ($node->is_root()) {
             ### it is the root 
             last;
         }
 
         if ($node->{factor} == BALANCED) {
             $prev = $node;
-            $prev_pos = is_left_child($node) ? LEFT_CHILD : RIGHT_CHILD;
+            $prev_pos = $node->is_left_child() ? LEFT_CHILD : RIGHT_CHILD;
             $node = $node->{parent};
             next;
         }
