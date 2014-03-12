@@ -321,12 +321,16 @@ sub insert_node {
     return $new_node, undef;
 } # insert_node
 
+sub new_node {
+    my $self = shift;
+    my $data = shift;
+    return BinarySearchTree::Node->new($data);
+} # new_node
+
 sub insert {
     my $self = shift;
     my $data = shift;
-
-    my $new_node = BinarySearchTree::Node->new($data);
-    return $self->insert_node($new_node);
+    return $self->insert_node($self->new_node($data));
 } # insert
 
 sub clone {

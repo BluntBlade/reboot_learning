@@ -1,9 +1,30 @@
 #!/usr/bin/env perl
 
-package RBTree;
-
 use strict;
 use warnings;
+
+package RBTree::Node;
+
+our @ISA = qw(BinarySearchTree::Node);
+
+use constant BLACK => 0;
+use constant RED   => 1;
+
+sub paint_as_black {
+    my $self = shift;
+    if (defined($self)) {
+        $self->{color} = BLACK;
+    }
+} # paint_as_black
+
+sub paint_as_red {
+    my $self = shift;
+    if (defined($self)) {
+        $self->{color} = RED;
+    }
+} # paint_as_red
+
+package RBTree;
 
 use BinarySearchTree;
 
@@ -11,17 +32,14 @@ use constant ROOT        => BinarySearchTree::ROOT;
 use constant LEFT_CHILD  => BinarySearchTree::LEFT_CHILD;
 use constant RIGHT_CHILD => BinarySearchTree::RIGHT_CHILD;
 
-use constant BLACK => 0;
-use constant RED   => 1;
-
 sub is_black {
-    my $node = shift;
-    return ((!defined($node)) || $node->{color} == BLACK);
+    my $self = shift;
+    return ((!defined($self)) || $self->{color} == RBTree::Node::BLACK);
 } # is_black
 
 sub is_red {
-    my $node = shift;
-    return (defined($node) && $node->{color} == RED);
+    my $self = shift;
+    return (defined($self) && $self->{color} == RBTree::Node::RED);
 } # is_red
 
 sub rebalance_after_inserted {
@@ -34,12 +52,12 @@ sub rebalance_after_inserted {
         return @ret;
     }
 
-    $node->{color} = RED;
+    $node->paint_as_red();
 
     while (1) {
         if ($node->is_root()) {
             ### case 1
-            $node->{color} = BLACK;
+            $node->paint_as_black();
             return @ret;
         }
 
@@ -55,9 +73,9 @@ sub rebalance_after_inserted {
 
             if (is_red($right_uncle)) {
                 ### case 3
-                $parent->{color}       = BLACK;
-                $right_uncle->{color}  = BLACK;
-                $grand_parent->{color} = RED;
+                $parent->paint_as_black();
+                $right_uncle->paint_as_black();
+                $grand_parent->paint_as_red();
 
                 $node = $grand_parent;
                 next;
@@ -70,8 +88,8 @@ sub rebalance_after_inserted {
 
             ### case 5
             $grand_parent->rotate_to_right();
-            $grand_parent->{color} = RED;
-            $parent->{color}       = BLACK;
+            $grand_parent->paint_as_red();
+            $parent->paint_as_black();
 
             last;
         } else {
@@ -79,9 +97,9 @@ sub rebalance_after_inserted {
 
             if (is_red($left_uncle)) {
                 ### case 3
-                $parent->{color}       = BLACK;
-                $left_uncle->{color}   = BLACK;
-                $grand_parent->{color} = RED;
+                $parent->paint_as_black();
+                $left_uncle->paint_as_black();
+                $grand_parent->paint_as_red();
 
                 $node = $grand_parent;
                 next;
@@ -94,8 +112,8 @@ sub rebalance_after_inserted {
 
             ### case 5
             $grand_parent->rotate_to_left();
-            $grand_parent->{color} = RED;
-            $parent->{color}       = BLACK;
+            $grand_parent->paint_as_red();
+            $parent->paint_as_black();
 
             last;
         } # if
@@ -119,7 +137,7 @@ sub rebalance_after_deleted {
     my $child  = $parent->{$deleted_pos};
     if (is_black($deleted_node)) {
         if (is_red($child)) {
-            $child->{color} = BLACK;
+            $child->paint_as_black();
             return @ret;
         }
     }
@@ -136,8 +154,8 @@ sub rebalance_after_deleted {
 
             ### case 2
             if (is_red($right_uncle)) {
-                $parent->{color}      = RED;
-                $right_uncle->{color} = BLACK;
+                $parent->paint_as_red();
+                $right_uncle->paint_as_black();
                 $parent->rotate_to_left();
 
                 $right_uncle = $parent->{right};
@@ -146,7 +164,7 @@ sub rebalance_after_deleted {
             ### case 3
             if (is_black($parent) && is_black($right_uncle)) {
                 if (is_black($right_uncle->{left}) && is_black($right_uncle->{right})) {
-                    $right_uncle->{color} = RED;
+                    $right_uncle->paint_as_red();
 
                     $child  = $parent;
                     $parent = $child->{parent};
@@ -161,8 +179,8 @@ sub rebalance_after_deleted {
             ### case 4
             if (is_red($parent) && is_black($right_uncle)) {
                 if (is_black($right_uncle->{left}) && is_black($right_uncle->{right})) {
-                    $right_uncle->{color} = RED;
-                    $parent->{color}      = BLACK;
+                    $right_uncle->paint_as_red();
+                    $parent->paint_as_black();
                     last;
                 }
             }
@@ -170,8 +188,8 @@ sub rebalance_after_deleted {
             ### case 5
             if (is_black($right_uncle)) {
                 if (is_red($right_uncle->{left}) && is_black($right_uncle->{right})) {
-                    $right_uncle->{color}       = RED;
-                    $right_uncle->{left}{color} = BLACK;
+                    $right_uncle->paint_as_red();
+                    $right_uncle->{left}->paint_as_black();
                     $right_uncle->rotate_to_right();
 
                     $right_uncle = $parent->{right};
@@ -180,8 +198,8 @@ sub rebalance_after_deleted {
 
             ### case 6
             $right_uncle->{color} = $parent->{color};
-            $parent->{color}      = BLACK;
-            $right_uncle->{right}{color} = BLACK;
+            $parent->paint_as_black();
+            $right_uncle->{right}->paint_as_black();
 
             $parent->rotate_to_left();
             last;
@@ -190,8 +208,8 @@ sub rebalance_after_deleted {
 
             ### case 2
             if (is_red($left_uncle)) {
-                $parent->{color}     = RED;
-                $left_uncle->{color} = BLACK;
+                $parent->paint_as_red();
+                $left_uncle->paint_as_black();
                 $parent->rotate_to_right();
 
                 $left_uncle = $parent->{left};
@@ -200,7 +218,7 @@ sub rebalance_after_deleted {
             ### case 3
             if (is_black($parent) && is_black($left_uncle)) {
                 if (is_black($left_uncle->{right}) && is_black($left_uncle->{left})) {
-                    $left_uncle->{color} = RED;
+                    $left_uncle->paint_as_red();
 
                     $child  = $parent;
                     $parent = $child->{parent};
@@ -215,8 +233,8 @@ sub rebalance_after_deleted {
             ### case 4
             if (is_red($parent) && is_black($left_uncle)) {
                 if (is_black($left_uncle->{right}) && is_black($left_uncle->{left})) {
-                    $left_uncle->{color} = RED;
-                    $parent->{color}     = BLACK;
+                    $left_uncle->paint_as_red();
+                    $parent->paint_as_black();
                     last;
                 }
             }
@@ -224,8 +242,8 @@ sub rebalance_after_deleted {
             ### case 5
             if (is_black($left_uncle)) {
                 if (is_red($left_uncle->{right}) && is_black($left_uncle->{left})) {
-                    $left_uncle->{color}       = RED;
-                    $left_uncle->{right}{color} = BLACK;
+                    $left_uncle->paint_as_red();
+                    $left_uncle->{right}->paint_as_black();
                     $left_uncle->rotate_to_left();
 
                     $left_uncle = $parent->{left};
@@ -233,9 +251,10 @@ sub rebalance_after_deleted {
             }
 
             ### case 6
-            $left_uncle->{color}       = $parent->{color};
-            $parent->{color}           = BLACK;
-            $left_uncle->{left}{color} = BLACK;
+            $left_uncle->{color} = $parent->{color};
+
+            $parent->paint_as_black();
+            $left_uncle->{left}->paint_as_black();
 
             $parent->rotate_to_right();
             last;
@@ -245,6 +264,12 @@ sub rebalance_after_deleted {
 } # rebalance_after_deleted
 
 our @ISA = qw(BinarySearchTree);
+
+sub new_node {
+    my $self = shift;
+    my $data = shift;
+    return RBTree::Node->new($data);
+} # new_node
 
 sub insert {
     my $self = shift;
@@ -261,29 +286,6 @@ sub delete {
     my @ret  = $self->BinarySearchTree::delete($data);
     return rebalance_after_deleted(@ret);
 } # delete
-
-=begin
-use Data::Dump qw(dump);
-
-my $in = [100, 50, 75, 60, 65, 25, 150, 175, 12, 200, 1, 2, 3, 4, 5, 6, 7, 8, 9];
-my $tree = __PACKAGE__->new(sub { $_[0] <=> $_[1] });
-
-for my $i (@$in) {
-    print STDERR "$i\n";
-    $tree->insert($i);
-    dump($tree->{root});
-    print STDERR "-" x 80, "\n";
-} # for
-
-print STDERR "=" x 80, "\n";
-
-for my $i (@$in) {
-    print STDERR "$i\n";
-    $tree->delete($i);
-    dump($tree->{root});
-    print STDERR "-" x 80, "\n";
-} # for
-=cut
 
 1;
 
