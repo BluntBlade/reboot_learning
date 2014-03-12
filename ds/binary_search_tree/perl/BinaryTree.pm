@@ -248,6 +248,67 @@ sub travel_by_post_order {
     return;
 } # travel_by_post_order
 
+sub travel_by_breadth_first_search {
+    my $root       = shift;
+    my $proc       = shift;
+    my $check_full = shift;
+
+    my @a_queue    = ();
+    my @b_queue    = ();
+    my $fake_node  = BinaryTree::Node->new(undef);
+
+    push @a_queue, $root;
+
+    my $id         = 0;
+    my $level      = 1;
+    my $real_nodes = 1;
+    my $queue      = \@b_queue;
+    my $next_queue = \@a_queue;
+
+    while (scalar(@{$next_queue}) > 0 && $real_nodes > 0) {
+
+        my $tq = $queue;
+        $queue = $next_queue;
+        $next_queue = $tq;
+
+        $real_nodes = 0;
+
+        while (scalar(@{$queue}) > 0) {
+            my $node = shift @{$queue};
+
+            if (defined($node->{data})) {
+
+                $proc->($node->{data}, $node, $level, $id);
+
+                if ($node->has_left_child()) {
+                    push @{$next_queue}, $node->left_child();
+                    $real_nodes += 1;
+                } elsif ($check_full) {
+                    push @{$next_queue}, $fake_node;
+                }
+
+                if ($node->has_right_child()) {
+                    push @{$next_queue}, $node->right_child();
+                    $real_nodes += 1;
+                } elsif ($check_full) {
+                    push @{$next_queue}, $fake_node;
+                }
+
+            } elsif ($check_full) {
+
+                $proc->($node->{data}, $node, $level, $id);
+
+                push @{$next_queue}, $fake_node;
+                push @{$next_queue}, $fake_node;
+            } # if
+
+            $id += 1;
+        } # while
+
+        $level += 1;
+    } # while
+} # travel_by_breadth_first_search
+
 1;
 
 __END__
