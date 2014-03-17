@@ -70,8 +70,12 @@ sub draw_as_text {
 
 use AvlTree;
 use RBTree;
+use SplayTree;
 
 my $in = [100, 50, 75, 60, 65, 25, 150, 175, 12, 200, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+my $in2 = [100, 50, 75, 60, 65, 25, 150];
+
+my $avl_tree = AvlTree->new(sub { $_[0] <=> $_[1] });
 
 my $render_avltree_node = sub {
     my $node = shift;
@@ -90,21 +94,23 @@ my $render_avltree_node = sub {
     return sprintf($color_tpl, $str), $len;
 }; # render_avltree_node
 
-my $tree = AvlTree->new(sub { $_[0] <=> $_[1] });
-
 for my $i (@$in) {
-    $tree->insert($i);
-    draw_as_text($tree->{root}, $render_avltree_node, 5);
+    $avl_tree->insert($i);
+    draw_as_text($avl_tree->{root}, $render_avltree_node, 5);
     print "-" x 80, "\n";
 } # for
 
 print "=" x 80, "\n";
 
 for my $i (@$in) {
-    $tree->delete($i);
-    draw_as_text($tree->{root}, $render_avltree_node, 5);
+    $avl_tree->delete($i);
+    draw_as_text($avl_tree->{root}, $render_avltree_node, 5);
     print "-" x 80, "\n";
 } # for
+
+print "~" x 80, "\n";
+
+my $rb_tree = RBTree->new(sub { $_[0] <=> $_[1] });
 
 my $render_rbtree_node = sub {
     my $node = shift;
@@ -121,19 +127,50 @@ my $render_rbtree_node = sub {
     return sprintf($color_tpl, $str), $len;
 }; # render_rbtree_node
 
-my $tree2 = RBTree->new(sub { $_[0] <=> $_[1] });
-
 for my $i (@$in) {
-    $tree2->insert($i);
-    draw_as_text($tree2->{root}, $render_rbtree_node, 5);
+    $rb_tree->insert($i);
+    draw_as_text($rb_tree->{root}, $render_rbtree_node, 5);
     print "-" x 80, "\n";
 } # for
 
 print "=" x 80, "\n";
 
 for my $i (@$in) {
-    $tree2->delete($i);
-    draw_as_text($tree2->{root}, $render_rbtree_node, 5);
+    $rb_tree->delete($i);
+    draw_as_text($rb_tree->{root}, $render_rbtree_node, 5);
+    print "-" x 80, "\n";
+} # for
+
+print "~" x 80, "\n";
+
+my $splay_tree = SplayTree->new(sub { $_[0] <=> $_[1] });
+
+my $render_splaytree_node = sub {
+    my $node = shift;
+
+    my $str = sprintf("%03d", $node->{data});
+    my $len = length($str);
+    return $str, $len;
+}; # render_splaytree_node
+
+for my $i (@$in2) {
+    $splay_tree->insert($i);
+    draw_as_text($splay_tree->{root}, $render_splaytree_node, 5);
+    print "-" x 80, "\n";
+} # for
+
+print "=" x 80, "\n";
+
+for my $i (@$in2) {
+    $splay_tree->search($i);
+    draw_as_text($splay_tree->{root}, $render_splaytree_node, 5);
+    print "-" x 80, "\n";
+} # for
+print "=" x 80, "\n";
+
+for my $i (@$in2) {
+    $splay_tree->delete($i);
+    draw_as_text($splay_tree->{root}, $render_splaytree_node, 5);
     print "-" x 80, "\n";
 } # for
 
