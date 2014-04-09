@@ -163,38 +163,48 @@ sub make_static_model {
     $model->{tbl}{$model->{eof}} = $new_node->($model->{eof}, 1);
 
     ### 生成查找树
-    my $cur = [
-        sort {
-            $b->{weight} <=> $a->{weight} ||
-            $a->{sym}    <=> $b->{sym}
-        } values(%{$model->{tbl}})
-    ];
-    my $next = [];
+    # 按权重排序
+    my @sorted = sort {
+        $b->{weight} <=> $a->{weight} ||
+        $a->{sym}    <=> $b->{sym}
+    } values(%{$model->{tbl}});
 
-    while (scalar(@$cur) > 1) {
-        while (scalar(@$cur) > 0) {
-            my $right = pop(@$cur);
-            my $left  = pop(@$cur);
+    # 生成排序链表
+    for (my $i = 1; $i < scalar(@sorted); $i += 1) {
+        $sorted[$i]->{next} = $sorted[$i - 1];
+    } # for
 
-            if (defined($left)) {
-                my $parent_node = $new_node->(undef, $left->{weight} + $right->{weight}, $left, $right);
+    my $tail = $sorted[-1];
+    while (defined($tail->{next})) {
+        my $right = $tail;
+        my $left  = $tail->{next};
 
-                $right->{bit}    = 1;
-                $right->{parent} = $parent_node;
+        $tail = $left->{next};
 
-                $left->{bit}     = 0;
-                $left->{parent}  = $parent_node;
+        my $parent_node = $new_node->(undef, $left->{weight} + $right->{weight}, $left, $right);
 
-                unshift(@$next, $parent_node);
-            } else {
-                unshift(@$next, $right);
-            }
+        $right->{bit}    = 1;
+        $right->{parent} = $parent_node;
+
+        $left->{bit}     = 0;
+        $left->{parent}  = $parent_node;
+
+        my $next = $tail;
+        my $prev = undef;
+        while (defined($next) && $next->{weight} < $parent_node->{weight}) {
+            $prev = $next;
+            $next = $next->{next};
         } # while
 
-        ($cur, $next) = ($next, $cur);
+        $parent_node->{next} = $next;
+        if (defined($prev)) {
+            $prev->{next} = $parent_node;
+        } else {
+            $tail = $parent_node;
+        }
     } # while
 
-    $model->{root} = $cur->[0];
+    $model->{root} = $tail;
     return $model;
 } # make_static_model
 
