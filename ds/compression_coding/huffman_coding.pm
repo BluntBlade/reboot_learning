@@ -1,57 +1,175 @@
 #!/usr/bin/env perl
 
-package HuffmanCoding;
+use strict;
+use warnings;
 
-use constant EOF => 256;
+package HuffmanCoding::ByteStringPump;
+
+use constant BYTE_EOF => 256;
+
+sub new {
+    my $class = shift || __PACKAGE__;
+    my $str = shift;
+    my $self = {
+        pos => 0,
+        str => $str,
+        len => length($str),
+    };
+    return bless $self, $class;
+} # new
+
+sub eof_sym {
+   return BYTE_EOF;
+} # eof_sym
+
+sub eof {
+    my $self = shift;
+    return $self->{pos} == $self->{len};
+} # eof
+
+sub reset {
+    my $self = shift;
+    $self->{pos} = 0;
+    return $self;
+} # reset
+
+sub get {
+    my $self = shift;
+    if ($self->eof()) {
+        return BYTE_EOF;
+    }
+
+    my $chr = substr($self->{str}, $self->{pos}, 1);
+    $self->{pos} += 1;
+    return ord($chr);
+} # get 
+
+package HuffmanCoding::SymbolModel::Tracer;
+
+sub new {
+    my $class = shift || __PACKAGE__;
+    my $model = shift;
+    my $self  = {
+        root  => $model->{root},
+        node  => $model->{root},
+    };
+    return bless $self, $class;
+} # new
+
+sub trace {
+    my $self = shift;
+    my $bit  = shift;
+
+    if ($self->{node}{left}{bit} == $bit) {
+        $self->{node} = $self->{node}{left};
+    } else {
+        $self->{node} = $self->{node}{right};
+    }
+
+    return $self->{node}{sym};
+} # trace
+
+sub reset {
+    my $self = shift;
+    $self->{node} = $self->{root};
+    return $self;
+} # reset
+
+package HuffmanCoding::SymbolModel;
 
 ### 生成新节点
 my $new_node = sub {
-    my $ord     = shift;
+    my $sym     = shift;
     my $weight  = shift;
     my $left    = shift;
     my $right   = shift;
 
     return {
-        ord     => $ord,
+        sym     => $sym,
         weight  => $weight,
         left    => $left,
         right   => $right,
     };
 }; # new_node
 
-### 计算字符出现次数
-my $calc_weight = sub {
-    my $data = shift;
+sub new {
+    my $class = shift || __PACKAGE__;
+    my $eof = shift;
+    my $self = {
+        tbl => {},
+        eof => $eof,
+    };
+    return bless $self, $class;
+} # new
 
-    my $tbl = {};
-    foreach my $c (@$data) {
-        $tbl->{$c} ||= 0;
-        $tbl->{$c} += 1;
-    } # foreach
+sub new_tracer {
+    my $self = shift;
+    return HuffmanCoding::SymbolModel::Tracer->new($self);
+} # new_tracer
 
-    return $tbl;
-}; # calc_weight
+sub eof_sym {
+    my $self = shift;
+    return $self->{eof};
+} # eof_sym
 
-### 生成查找树
-my $make_tree = sub {
-    my $tbl = shift;
+sub count {
+    my $self = shift;
+    my $sym  = shift;
 
-    my $a = [
+    if (not exists($self->{tbl}{$sym})) {
+        $self->{tbl}{$sym} = $new_node->($sym, 1);
+        ### TODO: add the new node into the chain
+    } else {
+        $self->{tbl}{$sym}{weight} += 1;
+        ### TODO: reduce counts proportionally
+    }
+    ### TODO: update tree
+} # count
+
+sub travel_code_bits {
+    my $self = shift;
+    my $sym  = shift;
+    my $proc = shift;
+
+    my $node = $self->{tbl}{$sym};
+    if (not defined($node)) {
+        return;
+    }
+
+    ### 编码的最后一位首先处理
+    ### 编码的第一位最后处理
+    while (defined($node->{parent})) {
+        $proc->($node->{bit});
+        $node = $node->{parent};
+    } # while
+
+    return;
+} # travel_code_bits
+
+### class method
+sub make_static_model {
+    my $sym_pump = shift;
+
+    my $model = HuffmanCoding::SymbolModel->new($sym_pump->eof_sym());
+
+    ### 计算符号出现次数
+    while ((my $sym = $sym_pump->get()) != $model->{eof}) {
+        if (not exists($model->{tbl}{$sym})) {
+            $model->{tbl}{$sym} = $new_node->($sym, 1);
+        } else {
+            $model->{tbl}{$sym}{weight} += 1;
+        }
+    } # while
+    $model->{tbl}{$model->{eof}} = $new_node->($model->{eof}, 1);
+
+    ### 生成查找树
+    my $cur = [
         sort {
             $b->{weight} <=> $a->{weight} ||
-            $a->{ord} <=> $a->{ord}
-        } map {
-            $new_node->($_, $tbl->{$_});
-        } keys(%$tbl)
+            $a->{sym}    <=> $b->{sym}
+        } values(%{$model->{tbl}})
     ];
-    my $b = [];
-    my $cur  = $a;
-    my $next = $b;
-
-    my $stbl = {};
-    foreach my $node (@$a) {
-        $stbl->{$node->{ord}} = $node;
-    } # foreach
+    my $next = [];
 
     while (scalar(@$cur) > 1) {
         while (scalar(@$cur) > 0) {
@@ -59,12 +177,12 @@ my $make_tree = sub {
             my $left  = pop(@$cur);
 
             if (defined($left)) {
-                my $parent_node = $new_node->(undef, $left->{weight} + $right->{right}, $left, $right);
+                my $parent_node = $new_node->(undef, $left->{weight} + $right->{weight}, $left, $right);
 
-                $right->{code}   = 1;
+                $right->{bit}    = 1;
                 $right->{parent} = $parent_node;
 
-                $left->{code}    = 0;
+                $left->{bit}     = 0;
                 $left->{parent}  = $parent_node;
 
                 unshift(@$next, $parent_node);
@@ -76,124 +194,99 @@ my $make_tree = sub {
         ($cur, $next) = ($next, $cur);
     } # while
 
-    return $stbl, $cur->[0];
-}; # make_tree
+    $model->{root} = $cur->[0];
+    return $model;
+} # make_static_model
 
-### 查找代码
-my $find_codes = sub {
-    my $tbl  = shift;
-    my $tree = shift;
-    my $c    = shift;
-
-    my $node = $tbl->{$c};
-    my $codes = [];
-    while (defined($node->{parent})) {
-        push(@$codes, $node->{code});
-        $node = $node->{parent};
-    } # while
-
-    return $codes;
-}; # find_codes
+package HuffmanCoding;
 
 sub huffman_encode {
     my $data = shift;
 
-    my $data_type = ref($data);
-    if ($data_type eq q{}) {
-        $data = [split(//, $data)];
-    } elsif ($data_type eq q{SCALAR}) {
-        $data = [split(//, $$data)];
-    }
-
-    if (ref($data) eq q{ARRAY}) {
-        $data = [map { ord($_) } @$data];
-    }
-    push(@$data, EOF);
-
-    my $tbl = $calc_weight->($data);
-    my ($stbl, $tree) = $make_tree->($tbl);
+    my $sym_pump = HuffmanCoding::ByteStringPump->new($data);
+    my $model    = HuffmanCoding::SymbolModel::make_static_model($sym_pump);
+    $sym_pump->reset();
 
     my $output = "";
-    my $ord = 0;
-    my $bit = 1;
-    foreach my $c (@$data) {
-        my $codes = $find_codes->($stbl, $tree, $c);
-        while (scalar(@$codes) > 0) {
-            my $code = pop(@$codes);
-            if ($code == 1) {
-                $ord |= $bit;
+    my $byte = 0;
+    my $mask = 1;
+    while (1) {
+        my $sym = $sym_pump->get();
+
+        my @bits = ();
+        $model->travel_code_bits($sym, sub {
+            my $bit = shift;
+            push(@bits, $bit);
+        });
+
+        while (scalar(@bits) > 0) {
+            my $bit = pop(@bits);
+            if ($bit == 1) {
+                $byte |= $mask;
             }
 
-            $bit <<= 1;
-            if ($bit == 256) {
-                $output .= chr($ord);
-                $ord = 0;
-                $bit = 1;
+            $mask <<= 1;
+            if ($mask == 256) {
+                $output .= chr($byte);
+                $byte = 0;
+                $mask = 1;
             }
         } # while
+
+        if ($sym == $sym_pump->eof_sym()) {
+            last;
+        }
     } # foreach
 
-    if ($bit > 1) {
-        $output .= chr($ord);
+    if ($mask > 1) {
+        $output .= chr($byte);
     }
 
-    return $tbl, $output;
+    return $model, $output;
 } # huffman_encode
 
 sub huffman_decode {
-    my $tbl  = shift;
-    my $data = shift;
+    my $model = shift;
+    my $data  = shift;
 
-    my $data_type = ref($data);
-    if ($data_type eq q{}) {
-        $data = [split(//, $data)];
-    } elsif ($data_type eq q{SCALAR}) {
-        $data = [split(//, $$data)];
-    }
+    my $sym_pump = HuffmanCoding::ByteStringPump->new($data);
 
-    if (ref($data) eq q{ARRAY}) {
-        $data = [map { ord($_) } @$data];
-    }
-
-    my ($stbl, $tree) = $make_tree->($tbl);
-
-    my $node = $tree;
+    my $tracer = $model->new_tracer();
     my $output = "";
-    foreach my $ord (@$data) {
-        my $bit = 1;
-        while ($bit < 256) {
-            my $code = $ord & $bit;
-            $bit <<= 1;
+    while (!$sym_pump->eof()) {
+        my $byte = $sym_pump->get();
+        my $mask = 1;
+        while ($mask < 256) {
+            my $bit = $byte & $mask;
+            $mask <<= 1;
 
-            if ($node->{left}{code} == $code) {
-                $node = $node->{left};
-            } else {
-                $node = $node->{right};
+            my $sym = $tracer->trace($bit);
+            if (not defined($sym)) {
+                next;
             }
 
-            if (defined($node->{ord})) {
-                # is a leaf
-                if ($node->{ord} == EOF) {
-                    last;
-                }
-
-                $output .= chr($node->{ord});
-                $node = $tree;
+            if ($sym == $model->eof_sym()) {
+                last;
             }
+
+            $output .= chr($sym);
+            $tracer->reset();
         } # while
     } # foreach
 
     return $output;
 } # huffman_decode
 
-my $encoding_str = shift @ARGV;
+my $encoding_str = shift @ARGV || '';
 printf "encoding length=%d\n", length($encoding_str);
 
-my ($tbl, $encoded_str) = huffman_encode($encoding_str);
+my ($model, $encoded_str) = huffman_encode($encoding_str);
 printf "encoded length=%d\n", length($encoded_str);
 
-my ($decoded_str) = huffman_decode($tbl, $encoded_str);
+my ($decoded_str) = huffman_decode($model, $encoded_str);
 printf "decoded str=%s\n", $decoded_str;
+
+printf "equality=%d\n", $encoding_str eq $decoded_str;
 
 1;
 
