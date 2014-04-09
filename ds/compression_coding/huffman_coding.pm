@@ -36,7 +36,14 @@ my $calc_weight = sub {
 my $make_tree = sub {
     my $tbl = shift;
 
-    my $a = [sort { $b->{weight} <=> $a->{weight} } map { $new_node->($_, $tbl->{$_}); } keys(%$tbl)];
+    my $a = [
+        sort {
+            $b->{weight} <=> $a->{weight} ||
+            $a->{ord} <=> $a->{ord}
+        } map {
+            $new_node->($_, $tbl->{$_});
+        } keys(%$tbl)
+    ];
     my $b = [];
     my $cur  = $a;
     my $next = $b;
