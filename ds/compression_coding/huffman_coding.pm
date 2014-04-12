@@ -492,6 +492,7 @@ sub huffman_adaptive_encode {
             $code_sink->push_bit(shift);
         });
         $code_sink->pack();
+        $model->count($esc_sym);
 
         ### 输出符号
         foreach my $bit (split(//, unpack("B*", chr($sym)))) {
@@ -534,6 +535,7 @@ sub huffman_adaptive_decode {
                 }
 
                 if ($sym == $model->esc_sym()) {
+                    $model->count($sym);
                     $state = OUTPUTTING;
                     next;
                 }
