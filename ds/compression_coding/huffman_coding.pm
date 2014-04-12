@@ -299,7 +299,11 @@ sub count {
             }
 
             $tmp = $pos->{next};
-            $pos->{next} = $node->{next};
+            if ($node->{next} == $pos) {
+                $pos->{next} = $node;
+            } else {
+                $pos->{next} = $node->{next};
+            }
             if (defined($pos->{next})) {
                 $pos->{next}{prev} = $pos;
             }
