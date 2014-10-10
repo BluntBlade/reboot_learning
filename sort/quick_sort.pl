@@ -1,0 +1,54 @@
+#!/usr/bin/env perl
+
+sub swap {
+    my $arr = shift;
+    my $a   = shift;
+    my $b   = shift;
+
+    ($arr->[$a], $arr->[$b]) = ($arr->[$b], $arr->[$a]);
+} # swap
+
+sub quick_sort {
+    my $arr     = shift;
+    my $left    = shift;
+    my $right   = shift;
+
+    if ($left > $right) {
+        return;
+    }
+
+    my $len = $right - $left + 1;
+    if ($len == 1) {
+        return;
+    }
+
+    my $pivot = $left + int(rand($len));
+    my $pivot_val = $arr->[$pivot];
+
+    swap($arr, $pivot, $right);
+
+    my $less = $left;
+    my $great = $right - 1;
+
+    while ($less <= $great) {
+
+        while ($arr->[$less] <= $pivot_val && $less < $right) {
+            $less += 1;
+        } # while
+        while ($pivot_val <= $arr->[$great] && $great >= $left) {
+            $great -= 1;
+        } # while
+
+        if ($less < $great) {
+            swap($arr, $less, $great);
+        }
+    } # while
+
+    swap($arr, $less, $right);
+    quick_sort($arr, $left, $great);
+    quick_sort($arr, $less + 1, $right);
+} # quick_sort
+
+my $arr = [ 10, 12, 6, 45, 0, 7, 19, 2, 16, 19, 3, 5, 98, 28, 34, 20, 1 ];
+quick_sort($arr, 0, scalar(@$arr) - 1);
+print "@$arr\n";
