@@ -13,42 +13,47 @@ sub quick_sort {
     my $left    = shift;
     my $right   = shift;
 
-    if ($left > $right) {
-        return;
-    }
-
     my $len = $right - $left + 1;
-    if ($len == 1) {
-        return;
-    }
-
     my $pivot = $left + int(rand($len));
     my $pivot_val = $arr->[$pivot];
 
     swap($arr, $pivot, $right);
 
-    my $less = $left;
-    my $great = $right - 1;
+    my $next_big = $left;
+    my $next_small = $right - 1;
 
-    while ($less <= $great) {
+    while (1) {
 
-        while ($arr->[$less] <= $pivot_val && $less < $right) {
-            $less += 1;
+        while ($next_big < $right && $arr->[$next_big] <= $pivot_val) {
+            $next_big += 1;
         } # while
-        while ($pivot_val <= $arr->[$great] && $great >= $left) {
-            $great -= 1;
+        while ($next_small >= $next_big && $pivot_val <= $arr->[$next_small]) {
+            $next_small -= 1;
         } # while
 
-        if ($less < $great) {
-            swap($arr, $less, $great);
+        if ($next_big < $next_small) {
+            swap($arr, $next_big, $next_small);
+            $next_big += 1;
+            $next_small -= 1;
+        } else {
+            last;
         }
+
     } # while
 
-    swap($arr, $less, $right);
-    quick_sort($arr, $left, $great);
-    quick_sort($arr, $less + 1, $right);
+    swap($arr, $next_big, $right);
+    if ($left < $next_small) {
+        quick_sort($arr, $left, $next_small);
+    }
+    if ($next_big + 1 < $right) {
+        quick_sort($arr, $next_big + 1, $right);
+    }
 } # quick_sort
 
 my $arr = [ 10, 12, 6, 45, 0, 7, 19, 2, 16, 19, 3, 5, 98, 28, 34, 20, 1 ];
+quick_sort($arr, 0, scalar(@$arr) - 1);
+print "@$arr\n";
+
+$arr = [ 19, 10, 12, 6, 45, 0, 7, 19, 2, 16, 19, 3, 5, 98, 28, 34, 20, 1 ];
 quick_sort($arr, 0, scalar(@$arr) - 1);
 print "@$arr\n";
